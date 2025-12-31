@@ -103,7 +103,7 @@ export const statuses = sqliteTable(
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
     updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
   },
-  (table) => [index("statuses_user_id_idx").on(table.userId)]
+  (table) => [index("statuses_user_id_idx").on(table.userId)],
 );
 
 /**
@@ -122,7 +122,7 @@ export const tags = sqliteTable(
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
     updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
   },
-  (table) => [index("tags_user_id_idx").on(table.userId)]
+  (table) => [index("tags_user_id_idx").on(table.userId)],
 );
 
 /**
@@ -164,7 +164,7 @@ export const tasks = sqliteTable(
     index("tasks_user_id_due_date_idx").on(table.userId, table.dueDate),
     index("tasks_user_id_completed_at_idx").on(table.userId, table.completedAt),
     index("tasks_parent_id_idx").on(table.parentId),
-  ]
+  ],
 );
 
 /**
@@ -193,7 +193,7 @@ export const tasksArchive = sqliteTable(
     updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
     archivedAt: integer("archived_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
   },
-  (table) => [index("tasks_archive_user_id_idx").on(table.userId)]
+  (table) => [index("tasks_archive_user_id_idx").on(table.userId)],
 );
 
 /**
@@ -210,7 +210,7 @@ export const taskTags = sqliteTable(
       .notNull()
       .references(() => tags.id, { onDelete: "cascade" }),
   },
-  (table) => [primaryKey({ columns: [table.taskId, table.tagId] })]
+  (table) => [primaryKey({ columns: [table.taskId, table.tagId] })],
 );
 
 /**
@@ -230,7 +230,7 @@ export const dailyReports = sqliteTable(
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
     updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
   },
-  (table) => [index("daily_reports_user_id_date_idx").on(table.userId, table.date)]
+  (table) => [index("daily_reports_user_id_date_idx").on(table.userId, table.date)],
 );
 
 /**
@@ -256,13 +256,12 @@ export const dailyReportTasks = sqliteTable(
     statusId: text("status_id")
       .notNull()
       .references(() => statuses.id),
-    nextStatusId: text("next_status_id")
-      .references(() => statuses.id),
+    nextStatusId: text("next_status_id").references(() => statuses.id),
     yesterdayNote: text("yesterday_note"),
     todayNote: text("today_note"),
     position: integer("position").notNull().default(0),
   },
-  (table) => [primaryKey({ columns: [table.dailyReportId, table.taskId] })]
+  (table) => [primaryKey({ columns: [table.dailyReportId, table.taskId] })],
 );
 
 /**
@@ -283,5 +282,5 @@ export const taskDescriptionVersions = sqliteTable(
   (table) => [
     index("task_description_versions_task_id_idx").on(table.taskId),
     index("task_description_versions_task_id_version_idx").on(table.taskId, table.version),
-  ]
+  ],
 );

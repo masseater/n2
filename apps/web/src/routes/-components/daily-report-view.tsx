@@ -7,27 +7,28 @@
  * - 現在のステータス: その日時点のスナップショット（読み取り専用）
  * - 次のステータス: 矢印で選択可能（今日以降に反映）
  */
-import { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+
+import { ChevronRight, Plus } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, ChevronRight } from "lucide-react";
-import { DateNavigator } from "./date-navigator";
-import {
-  ReportGranularitySwitcher,
-  type ReportGranularity,
-} from "./report-granularity-switcher";
-import type { DailyReportWithTasks, DailyReportTaskWithNotes } from "@/features/daily-reports/types";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
+import type {
+  DailyReportTaskWithNotes,
+  DailyReportWithTasks,
+} from "@/features/daily-reports/types";
 import type { Status, Tag, UpdateTaskInput } from "@/features/tasks/types";
+import { DateNavigator } from "./date-navigator";
+import { type ReportGranularity, ReportGranularitySwitcher } from "./report-granularity-switcher";
 
 type DailyReportViewProps = {
   report: DailyReportWithTasks;
@@ -75,7 +76,7 @@ function TaskEntry({
     setPriority(task.priority?.toString() ?? "");
     setYesterdayNote(task.yesterdayNote ?? "");
     setTodayNote(task.todayNote ?? "");
-  }, [task.id, task.title, task.description, task.priority, task.yesterdayNote, task.todayNote]);
+  }, [task.title, task.description, task.priority, task.yesterdayNote, task.todayNote]);
 
   const handleTitleBlur = () => {
     if (title !== task.title) {
@@ -111,12 +112,19 @@ function TaskEntry({
 
   // ステータス一覧（position順でソート）
   const sortedStatuses = [...statuses].sort((a, b) => a.position - b.position);
-  const nextStatus = task.nextStatusId
-    ? statuses.find((s) => s.id === task.nextStatusId)
-    : null;
+
+  // 今日変更したステータス（履歴）
+  const changedStatus = task.nextStatusId ? statuses.find((s) => s.id === task.nextStatusId) : null;
+
+  // 現在の実際のステータス（nextStatusIdがあれば変更後、なければスナップショット）
+  const currentActualStatusId = task.nextStatusId ?? task.statusId;
 
   const handleStatusSelect = (statusId: string) => {
-    // 現在のステータスと同じ場合はクリア
+    // 現在の実際のステータスと同じ場合は何もしない
+    if (statusId === currentActualStatusId) {
+      return;
+    }
+    // スナップショット（元のステータス）と同じ場合はnull（変更取り消し）
     if (statusId === task.statusId) {
       onNextStatusChange?.(null);
     } else {
@@ -159,14 +167,12 @@ function TaskEntry({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
-              variant={nextStatus ? "default" : "secondary"}
+              variant={changedStatus ? "default" : "secondary"}
               size="sm"
               className="h-6 px-2 text-xs gap-1"
             >
               {task.status.name}
-              {nextStatus && (
-                <span className="text-xs opacity-70">→ {nextStatus.name}</span>
-              )}
+              {changedStatus && <span className="text-xs opacity-70">→ {changedStatus.name}</span>}
               <ChevronRight className="h-3 w-3 ml-1" />
             </Button>
           </DropdownMenuTrigger>
@@ -175,12 +181,9 @@ function TaskEntry({
               <DropdownMenuItem
                 key={status.id}
                 onClick={() => handleStatusSelect(status.id)}
-                className={status.id === (nextStatus?.id ?? task.statusId) ? "bg-accent" : ""}
+                className={status.id === currentActualStatusId ? "bg-accent" : ""}
               >
                 {status.name}
-                {status.id === task.statusId && (
-                  <span className="ml-2 text-xs text-muted-foreground">(現在)</span>
-                )}
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
@@ -235,9 +238,7 @@ function TaskEntry({
 
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">
-            昨日やったこと
-          </label>
+          <span className="text-xs font-medium text-muted-foreground">昨日やったこと</span>
           <Textarea
             placeholder="昨日の進捗..."
             value={yesterdayNote}
@@ -247,9 +248,7 @@ function TaskEntry({
           />
         </div>
         <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">
-            今日やること
-          </label>
+          <span className="text-xs font-medium text-muted-foreground">今日やること</span>
           <Textarea
             placeholder="今日の予定..."
             value={todayNote}
@@ -290,23 +289,18 @@ export function DailyReportView({
       <div className="sticky top-0 bg-background z-10 py-6 mb-8">
         <div className="flex items-center justify-between">
           <DateNavigator date={selectedDate} onChange={onDateChange} />
-          <ReportGranularitySwitcher
-            value={granularity}
-            onChange={onGranularityChange}
-          />
+          <ReportGranularitySwitcher value={granularity} onChange={onGranularityChange} />
         </div>
       </div>
       <Card className="h-full">
-      <CardContent className="space-y-6">
+        <CardContent className="space-y-6">
           <div className="space-y-6">
             <div className="space-y-3">
               <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
                 タスク
               </h3>
               {sortedTasks.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-2">
-                  タスクがありません
-                </p>
+                <p className="text-sm text-muted-foreground py-2">タスクがありません</p>
               ) : (
                 <div className="space-y-3">
                   {sortedTasks.map((task) => (
@@ -315,12 +309,8 @@ export function DailyReportView({
                       task={task}
                       statuses={statuses}
                       allTags={tags}
-                      onNoteChange={(field, value) =>
-                        onTaskNoteChange?.(task.id, field, value)
-                      }
-                      onTaskUpdate={(input) =>
-                        onTaskUpdate?.(task.id, input)
-                      }
+                      onNoteChange={(field, value) => onTaskNoteChange?.(task.id, field, value)}
+                      onTaskUpdate={(input) => onTaskUpdate?.(task.id, input)}
                       onNextStatusChange={(nextStatusId) =>
                         onNextStatusChange?.(task.id, nextStatusId)
                       }
@@ -328,11 +318,7 @@ export function DailyReportView({
                   ))}
                 </div>
               )}
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={onAddTask}
-              >
+              <Button variant="outline" className="w-full" onClick={onAddTask}>
                 <Plus className="h-4 w-4 mr-2" />
                 タスクを追加
               </Button>
@@ -352,7 +338,7 @@ export function DailyReportView({
               />
             </div>
           </div>
-      </CardContent>
+        </CardContent>
       </Card>
     </div>
   );

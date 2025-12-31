@@ -3,29 +3,26 @@
  * ステータス別のカラム表示 + ドラッグ&ドロップ
  * オプティミスティックUIで即座に移動を反映
  */
-import { useState, useMemo } from "react";
+
 import {
-  DndContext,
-  DragOverlay,
   closestCorners,
+  DndContext,
+  type DragEndEvent,
+  DragOverlay,
+  type DragStartEvent,
   KeyboardSensor,
   PointerSensor,
+  useDroppable,
   useSensor,
   useSensors,
-  useDroppable,
-  type DragStartEvent,
-  type DragEndEvent,
 } from "@dnd-kit/core";
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-  useSortable,
-} from "@dnd-kit/sortable";
+import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import type { TaskWithRelations, Status } from "@/features/tasks/types";
+import type { Status, TaskWithRelations } from "@/features/tasks/types";
 
 type KanbanBoardProps = {
   tasks: TaskWithRelations[];
@@ -34,21 +31,11 @@ type KanbanBoardProps = {
   onTaskMove?: (taskId: string, newStatusId: string) => void;
 };
 
-function SortableKanbanCard({
-  task,
-  onClick,
-}: {
-  task: TaskWithRelations;
-  onClick?: () => void;
-}) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: task.id, data: { task, type: "task" } });
+function SortableKanbanCard({ task, onClick }: { task: TaskWithRelations; onClick?: () => void }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: task.id,
+    data: { task, type: "task" },
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -77,9 +64,7 @@ function SortableKanbanCard({
       <CardContent className="p-3">
         <p className="text-sm font-medium mb-1">{task.title}</p>
         {task.description && (
-          <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
-            {task.description}
-          </p>
+          <p className="text-xs text-muted-foreground mb-2 line-clamp-2">{task.description}</p>
         )}
         <div className="flex flex-wrap items-center gap-1.5">
           {task.priority && task.priority >= 7 && (
@@ -152,16 +137,13 @@ function DroppableColumn({
         </CardHeader>
         <CardContent className="p-3 pt-0">
           <ScrollArea className="h-[500px]">
-            <div
-              ref={setNodeRef}
-              className="min-h-[400px]"
-            >
+            <div ref={setNodeRef} className="min-h-[400px]">
               <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
                 {columnTasks.length === 0 ? (
-                  <div className={`flex items-center justify-center h-20 border-2 border-dashed rounded-lg transition-colors ${isOver ? "border-primary bg-primary/10" : "border-muted"}`}>
-                    <p className="text-sm text-muted-foreground">
-                      ここにドロップ
-                    </p>
+                  <div
+                    className={`flex items-center justify-center h-20 border-2 border-dashed rounded-lg transition-colors ${isOver ? "border-primary bg-primary/10" : "border-muted"}`}
+                  >
+                    <p className="text-sm text-muted-foreground">ここにドロップ</p>
                   </div>
                 ) : (
                   columnTasks.map((task) => (
@@ -181,12 +163,7 @@ function DroppableColumn({
   );
 }
 
-export function KanbanBoard({
-  tasks,
-  statuses,
-  onTaskClick,
-  onTaskMove,
-}: KanbanBoardProps) {
+export function KanbanBoard({ tasks, statuses, onTaskClick, onTaskMove }: KanbanBoardProps) {
   const [activeTask, setActiveTask] = useState<TaskWithRelations | null>(null);
   /** オプティミスティックUI用: ローカルでステータスを即座に反映 */
   const [optimisticMoves, setOptimisticMoves] = useState<Map<string, string>>(new Map());
@@ -213,7 +190,7 @@ export function KanbanBoard({
         distance: 8,
       },
     }),
-    useSensor(KeyboardSensor)
+    useSensor(KeyboardSensor),
   );
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -286,9 +263,7 @@ export function KanbanBoard({
           />
         ))}
       </div>
-      <DragOverlay>
-        {activeTask && <KanbanCardOverlay task={activeTask} />}
-      </DragOverlay>
+      <DragOverlay>{activeTask && <KanbanCardOverlay task={activeTask} />}</DragOverlay>
     </DndContext>
   );
 }

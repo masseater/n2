@@ -5,16 +5,19 @@
  */
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
-import { users, statuses, tags, tasks, taskTags, dailyReports, dailyReportTasks } from "../src/db/schema";
+import {
+  dailyReports,
+  dailyReportTasks,
+  statuses,
+  tags,
+  tasks,
+  taskTags,
+  users,
+} from "../src/db/schema";
 
 const LOCAL_DEV_USER_ID = "local-dev-user";
 
 const db = drizzle(new Database("./data/n2.db"));
-
-/**
- * 現在時刻（UTC考慮）
- */
-const now = new Date();
 
 /**
  * 日付を YYYY-MM-DD 形式に変換
@@ -38,26 +41,38 @@ async function seed() {
 
   // デモユーザー作成
   console.log("  Creating demo user...");
-  await db.insert(users).values({
-    id: LOCAL_DEV_USER_ID,
-    name: "Demo User",
-    email: "demo@example.com",
-    emailVerified: true,
-  }).onConflictDoNothing();
+  await db
+    .insert(users)
+    .values({
+      id: LOCAL_DEV_USER_ID,
+      name: "Demo User",
+      email: "demo@example.com",
+      emailVerified: true,
+    })
+    .onConflictDoNothing();
 
   // デフォルトステータス作成
   console.log("  Creating default statuses...");
   const defaultStatuses = [
     { id: "status-todo", name: "TODO", position: 0, isDefault: true, type: "todo" as const },
-    { id: "status-in-progress", name: "In Progress", position: 1, isDefault: true, type: "in_progress" as const },
+    {
+      id: "status-in-progress",
+      name: "In Progress",
+      position: 1,
+      isDefault: true,
+      type: "in_progress" as const,
+    },
     { id: "status-done", name: "Done", position: 2, isDefault: true, type: "done" as const },
   ];
 
   for (const status of defaultStatuses) {
-    await db.insert(statuses).values({
-      ...status,
-      userId: LOCAL_DEV_USER_ID,
-    }).onConflictDoNothing();
+    await db
+      .insert(statuses)
+      .values({
+        ...status,
+        userId: LOCAL_DEV_USER_ID,
+      })
+      .onConflictDoNothing();
   }
 
   // サンプルタグ作成
@@ -69,10 +84,13 @@ async function seed() {
   ];
 
   for (const tag of sampleTags) {
-    await db.insert(tags).values({
-      ...tag,
-      userId: LOCAL_DEV_USER_ID,
-    }).onConflictDoNothing();
+    await db
+      .insert(tags)
+      .values({
+        ...tag,
+        userId: LOCAL_DEV_USER_ID,
+      })
+      .onConflictDoNothing();
   }
 
   // サンプルタスク作成
@@ -132,13 +150,16 @@ async function seed() {
   ];
 
   for (const task of sampleTasks) {
-    await db.insert(tasks).values({
-      ...task,
-      userId: LOCAL_DEV_USER_ID,
-      path: "",
-      createdAt: now,
-      updatedAt: now,
-    }).onConflictDoNothing();
+    await db
+      .insert(tasks)
+      .values({
+        ...task,
+        userId: LOCAL_DEV_USER_ID,
+        path: "",
+        createdAt: now,
+        updatedAt: now,
+      })
+      .onConflictDoNothing();
   }
 
   // タスクにタグを紐付け
@@ -166,17 +187,28 @@ async function seed() {
   console.log(`    Today: ${today}, Yesterday: ${yesterday}`);
 
   const reports = [
-    { id: `report-${today}`, date: today, notes: "今日の作業メモ\n\n- 朝会で進捗共有\n- レビュー対応" },
-    { id: `report-${yesterday}`, date: yesterday, notes: "昨日の振り返り\n\n- テスト完了\n- ドキュメント下書き" },
+    {
+      id: `report-${today}`,
+      date: today,
+      notes: "今日の作業メモ\n\n- 朝会で進捗共有\n- レビュー対応",
+    },
+    {
+      id: `report-${yesterday}`,
+      date: yesterday,
+      notes: "昨日の振り返り\n\n- テスト完了\n- ドキュメント下書き",
+    },
   ];
 
   for (const report of reports) {
-    await db.insert(dailyReports).values({
-      ...report,
-      userId: LOCAL_DEV_USER_ID,
-      createdAt: now,
-      updatedAt: now,
-    }).onConflictDoNothing();
+    await db
+      .insert(dailyReports)
+      .values({
+        ...report,
+        userId: LOCAL_DEV_USER_ID,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .onConflictDoNothing();
   }
 
   // 日報タスクエントリ作成

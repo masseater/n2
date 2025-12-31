@@ -3,9 +3,9 @@
  * パス: /api/statuses/:statusId
  */
 import { createFileRoute } from "@tanstack/react-router";
-import { withAuth, jsonResponse, errorResponse } from "@/lib/api-utils";
 import { StatusService } from "@/features/tasks/service/status-service";
 import type { CreateStatusInput } from "@/features/tasks/types";
+import { errorResponse, jsonResponse, withAuth } from "@/lib/api-utils";
 
 type RouteParams = { statusId: string };
 type UpdateStatusInput = Partial<Pick<CreateStatusInput, "name" | "position">>;

@@ -2,14 +2,10 @@
  * 日付ナビゲーションコンポーネント
  * 前日/翌日ボタンとカレンダーピッカーで日付を選択
  */
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 type DateNavigatorProps = {
   date: Date;
@@ -62,21 +58,13 @@ export function DateNavigator({ date, onChange }: DateNavigatorProps) {
 
   return (
     <div className="flex items-center gap-2">
-      <Button
-        variant="outline"
-        size="icon"
-        onClick={goToPreviousDay}
-        aria-label="前日"
-      >
+      <Button variant="outline" size="icon" onClick={goToPreviousDay} aria-label="前日">
         <ChevronLeft className="h-4 w-4" />
       </Button>
 
       <Popover>
         <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            className="min-w-[200px] justify-center font-medium"
-          >
+          <Button variant="outline" className="min-w-[200px] justify-center font-medium">
             <CalendarIcon className="mr-2 h-4 w-4" />
             {formatDateJapanese(date)}
           </Button>
@@ -95,12 +83,7 @@ export function DateNavigator({ date, onChange }: DateNavigatorProps) {
         </PopoverContent>
       </Popover>
 
-      <Button
-        variant="outline"
-        size="icon"
-        onClick={goToNextDay}
-        aria-label="翌日"
-      >
+      <Button variant="outline" size="icon" onClick={goToNextDay} aria-label="翌日">
         <ChevronRight className="h-4 w-4" />
       </Button>
 

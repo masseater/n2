@@ -1,8 +1,4 @@
-import type {
-  CreateDailyReportInput,
-  UpdateDailyReportInput,
-  UpdateTaskNoteInput,
-} from "../types";
+import type { CreateDailyReportInput, UpdateDailyReportInput, UpdateTaskNoteInput } from "../types";
 
 const API_BASE = "/api/daily-reports";
 

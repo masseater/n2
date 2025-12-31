@@ -2,10 +2,11 @@
  * 月間日報ビュー
  * カレンダー形式で月を俯瞰、タスクがある日をマーク
  */
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { DailyReportWithTasks } from "@/features/daily-reports/types";
 
 type MonthlyReportViewProps = {
@@ -92,8 +93,9 @@ function DayCell({ date, report, isCurrentMonth, onClick }: DayCellProps) {
   const hasNotes = report?.notes && report.notes.trim().length > 0;
 
   return (
-    <div
-      className={`h-24 p-1 border cursor-pointer transition-colors hover:bg-muted/50 ${
+    <button
+      type="button"
+      className={`h-24 p-1 border cursor-pointer transition-colors hover:bg-muted/50 text-left ${
         isCurrentDay ? "ring-2 ring-primary ring-inset" : ""
       } ${!isCurrentMonth ? "opacity-50" : ""}`}
       onClick={onClick}
@@ -128,17 +130,12 @@ function DayCell({ date, report, isCurrentMonth, onClick }: DayCellProps) {
             </span>
           </div>
           {tasks.slice(0, 2).map((task) => (
-            <div
-              key={task.id}
-              className="text-[10px] truncate text-muted-foreground"
-            >
+            <div key={task.id} className="text-[10px] truncate text-muted-foreground">
               {task.status.type === "done" ? "✓" : "○"} {task.title}
             </div>
           ))}
           {totalTasks > 2 && (
-            <div className="text-[10px] text-muted-foreground">
-              +{totalTasks - 2}
-            </div>
+            <div className="text-[10px] text-muted-foreground">+{totalTasks - 2}</div>
           )}
         </div>
       )}
@@ -150,7 +147,7 @@ function DayCell({ date, report, isCurrentMonth, onClick }: DayCellProps) {
           </Badge>
         </div>
       )}
-    </div>
+    </button>
   );
 }
 
@@ -185,18 +182,14 @@ export function MonthlyReportView({
   };
 
   const monthLabel = `${year}年${monthIndex + 1}月`;
-  const isCurrentMonth =
-    year === new Date().getFullYear() && monthIndex === new Date().getMonth();
+  const isCurrentMonth = year === new Date().getFullYear() && monthIndex === new Date().getMonth();
 
   // 月間サマリー
   const monthlyCompleted = reports.reduce(
     (sum, r) => sum + r.tasks.filter((t) => t.status.type === "done").length,
-    0
+    0,
   );
-  const monthlyTotalTasks = reports.reduce(
-    (sum, r) => sum + r.tasks.length,
-    0
-  );
+  const monthlyTotalTasks = reports.reduce((sum, r) => sum + r.tasks.length, 0);
   const daysWithReports = reports.filter((r) => r.tasks.length > 0).length;
 
   return (
@@ -222,7 +215,8 @@ export function MonthlyReportView({
               記録日数: <strong className="text-foreground">{daysWithReports}</strong>日
             </span>
             <span>
-              完了: <strong className="text-foreground">{monthlyCompleted}</strong>/{monthlyTotalTasks}
+              完了: <strong className="text-foreground">{monthlyCompleted}</strong>/
+              {monthlyTotalTasks}
             </span>
           </div>
         </CardTitle>
@@ -239,12 +233,13 @@ export function MonthlyReportView({
               {label}
             </div>
           ))}
-          {weeks.flat().map((date, i) => {
+          {weeks.flat().map((date, index) => {
             const dateStr = date ? formatDateToString(date) : "";
             const report = date ? reportMap.get(dateStr) : undefined;
+            const cellKey = date ? formatDateToString(date) : `empty-${index}`;
             return (
               <DayCell
-                key={i}
+                key={cellKey}
                 date={date}
                 report={report}
                 isCurrentMonth={date?.getMonth() === monthIndex}

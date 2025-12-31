@@ -19,11 +19,7 @@ export function LoginButton({ className }: LoginButtonProps) {
   };
 
   return (
-    <button
-      type="button"
-      onClick={handleLogin}
-      className={className}
-    >
+    <button type="button" onClick={handleLogin} className={className}>
       Google でログイン
     </button>
   );

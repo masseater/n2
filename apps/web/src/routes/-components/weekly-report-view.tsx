@@ -2,8 +2,9 @@
  * 週間日報ビュー
  * 1週間分の日報を縦に並べて概要表示
  */
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { DailyReportWithTasks } from "@/features/daily-reports/types";
 import type { TaskWithRelations } from "@/features/tasks/types";
@@ -108,9 +109,10 @@ function DaySummary({ date, report, onClick, onTaskClick }: DaySummaryProps) {
               <span className="font-medium">{inProgressCount}件</span>
             </div>
             {tasks.slice(0, 3).map((task) => (
-              <div
+              <button
+                type="button"
                 key={task.id}
-                className="text-xs truncate text-muted-foreground hover:text-foreground cursor-pointer"
+                className="text-xs truncate text-muted-foreground hover:text-foreground cursor-pointer block w-full text-left"
                 onClick={(e) => {
                   e.stopPropagation();
                   onTaskClick?.(task);
@@ -118,12 +120,10 @@ function DaySummary({ date, report, onClick, onTaskClick }: DaySummaryProps) {
               >
                 {task.status.type === "done" ? "✓ " : "○ "}
                 {task.title}
-              </div>
+              </button>
             ))}
             {totalTasks > 3 && (
-              <div className="text-xs text-muted-foreground">
-                他 {totalTasks - 3} 件
-              </div>
+              <div className="text-xs text-muted-foreground">他 {totalTasks - 3} 件</div>
             )}
           </div>
         ) : (
@@ -157,25 +157,21 @@ export function WeeklyReportView({
   // 週間サマリー
   const totalCompleted = reports.reduce(
     (sum, r) => sum + r.tasks.filter((t) => t.status.type === "done").length,
-    0
+    0,
   );
-  const weeklyTotalTasks = reports.reduce(
-    (sum, r) => sum + r.tasks.length,
-    0
-  );
+  const weeklyTotalTasks = reports.reduce((sum, r) => sum + r.tasks.length, 0);
 
   return (
     <Card className="h-full">
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center justify-between">
           <span>週間レポート</span>
-          <span className="text-base font-normal text-muted-foreground">
-            {weekRangeText}
-          </span>
+          <span className="text-base font-normal text-muted-foreground">{weekRangeText}</span>
         </CardTitle>
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
           <span>
-            完了タスク: <strong className="text-foreground">{totalCompleted}</strong>/{weeklyTotalTasks}
+            完了タスク: <strong className="text-foreground">{totalCompleted}</strong>/
+            {weeklyTotalTasks}
           </span>
         </div>
       </CardHeader>

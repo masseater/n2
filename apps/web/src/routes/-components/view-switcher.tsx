@@ -2,8 +2,9 @@
  * ビュー切り替えコンポーネント
  * リスト・カンバン・日報の3ビューを切り替え
  */
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import type { ViewMode } from "@n2/shared";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type ViewSwitcherProps = {
   value: ViewMode;

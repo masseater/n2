@@ -3,9 +3,9 @@
  * パス: /api/daily-reports/:date/tasks
  */
 import { createFileRoute } from "@tanstack/react-router";
-import { withAuth, errorResponse } from "@/lib/api-utils";
 import { DailyReportService } from "@/features/daily-reports/service/daily-report-service";
-import type { UpdateTaskNoteInput, UpdateNextStatusInput } from "@/features/daily-reports/types";
+import type { UpdateNextStatusInput, UpdateTaskNoteInput } from "@/features/daily-reports/types";
+import { errorResponse, withAuth } from "@/lib/api-utils";
 
 type RouteParams = { date: string };
 
@@ -35,7 +35,10 @@ export const Route = createFileRoute("/api/daily-reports/$date/tasks")({
           }
 
           if (body.field !== "yesterdayNote" && body.field !== "todayNote") {
-            return errorResponse("field must be 'yesterdayNote', 'todayNote', or 'nextStatus'", 400);
+            return errorResponse(
+              "field must be 'yesterdayNote', 'todayNote', or 'nextStatus'",
+              400,
+            );
           }
 
           await service.updateTaskNote(params.date, body.taskId, body.field, body.value);

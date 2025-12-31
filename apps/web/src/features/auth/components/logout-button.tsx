@@ -21,11 +21,7 @@ export function LogoutButton({ className }: LogoutButtonProps) {
   };
 
   return (
-    <button
-      type="button"
-      onClick={handleLogout}
-      className={className}
-    >
+    <button type="button" onClick={handleLogout} className={className}>
       ログアウト
     </button>
   );

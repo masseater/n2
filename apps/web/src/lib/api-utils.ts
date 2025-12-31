@@ -1,7 +1,7 @@
-import { getCloudflareEnv, isLocalDevelopment, getLocalDatabase } from "./get-env";
 import { createD1Database } from "../db";
 import type { ServiceDatabase } from "../db/types";
-import { createAuth, createLocalAuth, type Auth } from "../features/auth/auth";
+import { type Auth, createAuth, createLocalAuth } from "../features/auth/auth";
+import { getCloudflareEnv, getLocalDatabase, isLocalDevelopment } from "./get-env";
 
 /**
  * API レスポンスを JSON で返すヘルパー
@@ -44,7 +44,7 @@ const LOCAL_DEV_USER_ID = "local-dev-user";
 
 export async function withAuth(
   request: Request,
-  handler: (ctx: ApiContext) => Promise<Response>
+  handler: (ctx: ApiContext) => Promise<Response>,
 ): Promise<Response> {
   // ローカル開発環境
   if (isLocalDevelopment()) {

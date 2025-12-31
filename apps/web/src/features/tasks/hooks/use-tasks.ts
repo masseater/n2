@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { tasksQueryOptions, taskQueryOptions, projectsQueryOptions } from "../api/task-queries";
+import { projectsQueryOptions, taskQueryOptions, tasksQueryOptions } from "../api/task-queries";
 import type { TaskFilter } from "../types";
 
 /**

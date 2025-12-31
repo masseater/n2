@@ -1,8 +1,8 @@
-import { eq, and, inArray } from "drizzle-orm";
-import type { ServiceDatabase } from "../../../db/types";
+import { and, eq, inArray } from "drizzle-orm";
 import { tags, taskTags } from "../../../db/schema";
+import type { ServiceDatabase } from "../../../db/types";
 import { generateId } from "../../../lib/api-utils";
-import type { Tag, CreateTagInput } from "../types";
+import type { CreateTagInput, Tag } from "../types";
 
 /**
  * タグサービス
@@ -11,7 +11,7 @@ import type { Tag, CreateTagInput } from "../types";
 export class TagService {
   constructor(
     private db: ServiceDatabase,
-    private userId: string
+    private userId: string,
   ) {}
 
   /**
@@ -65,10 +65,7 @@ export class TagService {
   /**
    * タグを更新
    */
-  async update(
-    tagId: string,
-    input: Partial<CreateTagInput>
-  ): Promise<Tag> {
+  async update(tagId: string, input: Partial<CreateTagInput>): Promise<Tag> {
     const existing = await this.get(tagId);
     if (!existing) {
       throw new Error("タグが見つかりません");
@@ -102,9 +99,7 @@ export class TagService {
       throw new Error("タグが見つかりません");
     }
 
-    await this.db
-      .delete(tags)
-      .where(and(eq(tags.id, tagId), eq(tags.userId, this.userId)));
+    await this.db.delete(tags).where(and(eq(tags.id, tagId), eq(tags.userId, this.userId)));
   }
 
   /**
@@ -116,10 +111,7 @@ export class TagService {
       throw new Error("タグが見つかりません");
     }
 
-    await this.db
-      .insert(taskTags)
-      .values({ taskId, tagId })
-      .onConflictDoNothing();
+    await this.db.insert(taskTags).values({ taskId, tagId }).onConflictDoNothing();
   }
 
   /**

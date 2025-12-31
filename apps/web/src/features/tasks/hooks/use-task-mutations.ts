@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createTask, updateTask, deleteTask, moveTask, restoreTask } from "../api/task-mutations";
-import type { CreateTaskInput, UpdateTaskInput, MoveTaskInput } from "../types";
+import { createTask, deleteTask, moveTask, restoreTask, updateTask } from "../api/task-mutations";
+import type { CreateTaskInput, MoveTaskInput, UpdateTaskInput } from "../types";
 
 /**
  * タスク作成のミューテーションフック

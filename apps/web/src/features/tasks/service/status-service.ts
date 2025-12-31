@@ -1,8 +1,8 @@
-import { eq, and } from "drizzle-orm";
-import type { ServiceDatabase } from "../../../db/types";
+import { and, eq } from "drizzle-orm";
 import { statuses } from "../../../db/schema";
+import type { ServiceDatabase } from "../../../db/types";
 import { generateId } from "../../../lib/api-utils";
-import type { Status, CreateStatusInput, StatusType } from "../types";
+import type { CreateStatusInput, Status, StatusType } from "../types";
 
 /**
  * ステータスサービス
@@ -11,7 +11,7 @@ import type { Status, CreateStatusInput, StatusType } from "../types";
 export class StatusService {
   constructor(
     private db: ServiceDatabase,
-    private userId: string
+    private userId: string,
   ) {}
 
   /**
@@ -69,7 +69,7 @@ export class StatusService {
    */
   async update(
     statusId: string,
-    input: Partial<Pick<CreateStatusInput, "name" | "position">>
+    input: Partial<Pick<CreateStatusInput, "name" | "position">>,
   ): Promise<Status> {
     const existing = await this.get(statusId);
     if (!existing) {

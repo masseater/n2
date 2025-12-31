@@ -1,16 +1,24 @@
-import { eq, and, gte, lte, inArray } from "drizzle-orm";
-import { format, subDays, parse } from "date-fns";
+import type { DailyReportTaskWithNotes } from "@n2/shared";
+import { format, parse, subDays } from "date-fns";
+import { and, eq, gte, inArray, lte } from "drizzle-orm";
+import {
+  dailyReports,
+  dailyReportTasks,
+  statuses,
+  tags,
+  tasks,
+  taskTags,
+} from "../../../db/schema";
 import type { ServiceDatabase } from "../../../db/types";
-import { dailyReports, dailyReportTasks, tasks, statuses, tags, taskTags } from "../../../db/schema";
 import { generateId } from "../../../lib/api-utils";
+import { TaskService } from "../../tasks/service/task-service";
+import type { TaskWithRelations } from "../../tasks/types";
 import type {
+  CreateDailyReportInput,
   DailyReport,
   DailyReportWithTasks,
-  CreateDailyReportInput,
   UpdateDailyReportInput,
 } from "../types";
-import type { TaskWithRelations } from "../../tasks/types";
-import type { DailyReportTaskWithNotes } from "@n2/shared";
 
 const DATE_FORMAT = "yyyy-MM-dd";
 
@@ -46,10 +54,14 @@ function getYesterdayDateString(dateStr: string): string {
  * 4. 2日以上前に Done になったタスク → 表示しない
  */
 export class DailyReportService {
+  private taskService: TaskService;
+
   constructor(
     private db: ServiceDatabase,
-    private userId: string
-  ) {}
+    private userId: string,
+  ) {
+    this.taskService = new TaskService(db, userId);
+  }
 
   /**
    * 日報一覧を取得（日付範囲指定）
@@ -62,8 +74,8 @@ export class DailyReportService {
         and(
           eq(dailyReports.userId, this.userId),
           gte(dailyReports.date, from),
-          lte(dailyReports.date, to)
-        )
+          lte(dailyReports.date, to),
+        ),
       )
       .orderBy(dailyReports.date);
 
@@ -152,7 +164,7 @@ export class DailyReportService {
     date: string,
     taskId: string,
     field: "yesterdayNote" | "todayNote",
-    value: string | null
+    value: string | null,
   ): Promise<void> {
     const report = await this.getOrCreate(date);
 
@@ -161,10 +173,7 @@ export class DailyReportService {
       .select()
       .from(dailyReportTasks)
       .where(
-        and(
-          eq(dailyReportTasks.dailyReportId, report.id),
-          eq(dailyReportTasks.taskId, taskId)
-        )
+        and(eq(dailyReportTasks.dailyReportId, report.id), eq(dailyReportTasks.taskId, taskId)),
       );
 
     if (existing) {
@@ -173,17 +182,11 @@ export class DailyReportService {
         .update(dailyReportTasks)
         .set({ [field]: value })
         .where(
-          and(
-            eq(dailyReportTasks.dailyReportId, report.id),
-            eq(dailyReportTasks.taskId, taskId)
-          )
+          and(eq(dailyReportTasks.dailyReportId, report.id), eq(dailyReportTasks.taskId, taskId)),
         );
     } else {
       // 新規作成: タスクの現在のステータスをスナップショット
-      const [task] = await this.db
-        .select()
-        .from(tasks)
-        .where(eq(tasks.id, taskId));
+      const [task] = await this.db.select().from(tasks).where(eq(tasks.id, taskId));
 
       if (!task) {
         throw new Error("タスクが見つかりません");
@@ -202,14 +205,14 @@ export class DailyReportService {
   }
 
   /**
-   * 日報エントリの次のステータスを更新
-   * 今日以降に反映されるステータス変更
+   * 日報からタスクのステータスを更新
+   * タスク本体の statusId を即座に更新し、日報エントリに履歴として記録
+   *
+   * @param date 日報の日付
+   * @param taskId 対象タスクID
+   * @param statusId 新しいステータスID（null の場合は何もしない）
    */
-  async updateNextStatus(
-    date: string,
-    taskId: string,
-    nextStatusId: string | null
-  ): Promise<void> {
+  async updateNextStatus(date: string, taskId: string, statusId: string | null): Promise<void> {
     const report = await this.getOrCreate(date);
 
     // 既存エントリを確認
@@ -217,28 +220,39 @@ export class DailyReportService {
       .select()
       .from(dailyReportTasks)
       .where(
-        and(
-          eq(dailyReportTasks.dailyReportId, report.id),
-          eq(dailyReportTasks.taskId, taskId)
-        )
+        and(eq(dailyReportTasks.dailyReportId, report.id), eq(dailyReportTasks.taskId, taskId)),
       );
 
+    // null の場合: 元のステータスに戻す（変更取り消し）
+    if (statusId === null) {
+      if (existing) {
+        // スナップショット（元のステータス）に戻す
+        await this.taskService.update(taskId, { statusId: existing.statusId });
+        // nextStatusId をクリア
+        await this.db
+          .update(dailyReportTasks)
+          .set({ nextStatusId: null })
+          .where(
+            and(eq(dailyReportTasks.dailyReportId, report.id), eq(dailyReportTasks.taskId, taskId)),
+          );
+      }
+      return;
+    }
+
+    // タスク本体のステータスを即座に更新（completedAt も自動設定される）
+    await this.taskService.update(taskId, { statusId });
+
     if (existing) {
+      // 履歴として nextStatusId に記録
       await this.db
         .update(dailyReportTasks)
-        .set({ nextStatusId })
+        .set({ nextStatusId: statusId })
         .where(
-          and(
-            eq(dailyReportTasks.dailyReportId, report.id),
-            eq(dailyReportTasks.taskId, taskId)
-          )
+          and(eq(dailyReportTasks.dailyReportId, report.id), eq(dailyReportTasks.taskId, taskId)),
         );
     } else {
-      // 新規作成: タスクの現在のステータスをスナップショット
-      const [task] = await this.db
-        .select()
-        .from(tasks)
-        .where(eq(tasks.id, taskId));
+      // 新規作成: タスクの変更前ステータスをスナップショット、変更後を nextStatusId に記録
+      const [task] = await this.db.select().from(tasks).where(eq(tasks.id, taskId));
 
       if (!task) {
         throw new Error("タスクが見つかりません");
@@ -248,8 +262,8 @@ export class DailyReportService {
       await this.db.insert(dailyReportTasks).values({
         dailyReportId: report.id,
         taskId,
-        statusId: task.statusId,
-        nextStatusId,
+        statusId: task.statusId, // 変更後のステータス（既に更新済み）
+        nextStatusId: statusId, // 履歴として記録
         position: maxPosition + 1,
       });
     }
@@ -267,10 +281,7 @@ export class DailyReportService {
     await this.db
       .delete(dailyReportTasks)
       .where(
-        and(
-          eq(dailyReportTasks.dailyReportId, report.id),
-          eq(dailyReportTasks.taskId, taskId)
-        )
+        and(eq(dailyReportTasks.dailyReportId, report.id), eq(dailyReportTasks.taskId, taskId)),
       );
   }
 
@@ -282,10 +293,7 @@ export class DailyReportService {
     const yesterdayDateStr = getYesterdayDateString(report.date);
 
     // 全タスクを取得
-    const allTasks = await this.db
-      .select()
-      .from(tasks)
-      .where(eq(tasks.userId, this.userId));
+    const allTasks = await this.db.select().from(tasks).where(eq(tasks.userId, this.userId));
 
     // ステータス一覧を取得
     const statusList = await this.db
@@ -295,14 +303,32 @@ export class DailyReportService {
     const statusMap = new Map(statusList.map((s) => [s.id, s]));
 
     // 表示対象のタスクを抽出
+    // 表示条件:
+    // 1. In Progress / TODO のタスク → 表示
+    // 2. 昨日 Done になったタスク → 表示（completedAt が昨日）
+    // 3. 今日 Done になったタスク → 表示（completedAt が今日）
+    // 4. 2日以上前に Done になったタスク → 表示しない
     const displayTaskIds = new Set<string>();
+    const reportDate = parseDate(report.date);
+    const yesterdayDate = subDays(reportDate, 1);
 
     for (const task of allTasks) {
       const status = statusMap.get(task.statusId);
       if (!status) continue;
 
-      // Done タスクは表示しない
       if (status.type === "done") {
+        // Done タスクは completedAt で判定
+        if (task.completedAt) {
+          const completedDate = new Date(task.completedAt);
+          const completedDateStr = formatDate(completedDate);
+          const reportDateStr = report.date;
+          const yesterdayDateStr = formatDate(yesterdayDate);
+
+          // 今日または昨日に完了したタスクは表示
+          if (completedDateStr === reportDateStr || completedDateStr === yesterdayDateStr) {
+            displayTaskIds.add(task.id);
+          }
+        }
         continue;
       }
 
@@ -330,11 +356,12 @@ export class DailyReportService {
     const [yesterdayReport] = await this.db
       .select()
       .from(dailyReports)
-      .where(
-        and(eq(dailyReports.userId, this.userId), eq(dailyReports.date, yesterdayDateStr))
-      );
+      .where(and(eq(dailyReports.userId, this.userId), eq(dailyReports.date, yesterdayDateStr)));
 
-    const yesterdayEntryMap = new Map<string, { todayNote: string | null; nextStatusId: string | null }>();
+    const yesterdayEntryMap = new Map<
+      string,
+      { todayNote: string | null; nextStatusId: string | null }
+    >();
     if (yesterdayReport) {
       const yesterdayEntries = await this.db
         .select()
@@ -353,17 +380,15 @@ export class DailyReportService {
     const tasksWithRelations = await this.attachTaskRelations(targetTasks);
 
     // 結果を構築
+    // 日報表示用: スナップショット（変更前）のステータスを使用
+    // nextStatusId: 今日変更したステータス（変更後）
     // yesterdayNote がない場合は昨日の todayNote を使用
-    // statusId の優先順位:
-    //   1. 今日のエントリにスナップショットがあればそれ
-    //   2. 昨日の nextStatusId があればそれ（ステータス変更の反映）
-    //   3. タスクの現在のステータス
     const resultTasks: DailyReportTaskWithNotes[] = tasksWithRelations.map((task) => {
       const entry = entryMap.get(task.id);
       const yesterdayEntry = yesterdayEntryMap.get(task.id);
 
-      // スナップショットされたステータスを使用
-      const snapshotStatusId = entry?.statusId ?? yesterdayEntry?.nextStatusId ?? task.statusId;
+      // 日報表示用のステータス: スナップショット（変更前）を使用
+      const snapshotStatusId = entry?.statusId ?? task.statusId;
       const snapshotStatus = statusMap.get(snapshotStatusId);
       if (!snapshotStatus) {
         throw new Error(`ステータスが見つかりません: ${snapshotStatusId}`);
@@ -406,7 +431,7 @@ export class DailyReportService {
    * タスクにリレーション（status, tags）を付与
    */
   private async attachTaskRelations(
-    taskList: (typeof tasks.$inferSelect)[]
+    taskList: (typeof tasks.$inferSelect)[],
   ): Promise<TaskWithRelations[]> {
     if (taskList.length === 0) return [];
 
@@ -427,9 +452,7 @@ export class DailyReportService {
 
     const tagIds = [...new Set(tagRelations.map((r) => r.tagId))];
     const tagList =
-      tagIds.length > 0
-        ? await this.db.select().from(tags).where(inArray(tags.id, tagIds))
-        : [];
+      tagIds.length > 0 ? await this.db.select().from(tags).where(inArray(tags.id, tagIds)) : [];
     const tagMap = new Map(tagList.map((t) => [t.id, t]));
 
     const taskTagMap = new Map<string, typeof tagList>();

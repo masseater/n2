@@ -2,13 +2,14 @@
  * タスクリストコンポーネント
  * 階層構造でタスクを表示、インラインでタスク作成可能
  */
-import { useState, useRef } from "react";
+
+import { Plus } from "lucide-react";
+import { useRef, useState } from "react";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
-import { Plus } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import type { TaskWithRelations } from "@/features/tasks/types";
 
 type TaskListProps = {
@@ -34,8 +35,9 @@ function TaskItem({
 
   return (
     <div className="border-b border-border last:border-b-0">
-      <div
-        className="flex items-center gap-3 py-3 px-4 hover:bg-muted/50 cursor-pointer transition-colors"
+      <button
+        type="button"
+        className="flex items-center gap-3 py-3 px-4 hover:bg-muted/50 cursor-pointer transition-colors w-full text-left"
         style={{ paddingLeft: paddingLeft + 16 }}
         onClick={() => onTaskClick?.(task)}
       >
@@ -53,9 +55,7 @@ function TaskItem({
             {task.title}
           </p>
           {task.description && (
-            <p className="text-xs text-muted-foreground truncate mt-0.5">
-              {task.description}
-            </p>
+            <p className="text-xs text-muted-foreground truncate mt-0.5">{task.description}</p>
           )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -74,14 +74,11 @@ function TaskItem({
               {tag.name}
             </Badge>
           ))}
-          <Badge
-            variant="secondary"
-            className="text-xs"
-          >
+          <Badge variant="secondary" className="text-xs">
             {task.status.name}
           </Badge>
         </div>
-      </div>
+      </button>
       {task.children?.map((child) => (
         <TaskItem
           key={child.id}

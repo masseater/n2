@@ -35,21 +35,17 @@
     }
   },
   "css": {
+    "parser": {
+      "cssModules": true,
+      "tailwindDirectives": true
+    },
     "linter": {
-      "enabled": false
+      "enabled": true
     },
     "formatter": {
-      "enabled": false
+      "enabled": true
     }
   },
-  "overrides": [
-    {
-      "includes": ["**/*.gen.ts"],
-      "linter": {
-        "enabled": false
-      }
-    }
-  ],
   "assist": {
     "enabled": true,
     "actions": {
@@ -57,5 +53,19 @@
         "organizeImports": "on"
       }
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["**/*.gen.ts"],
+      "linter": {
+        "enabled": false
+      },
+      "formatter": {
+        "enabled": false
+      },
+      "assist": {
+        "enabled": false
+      }
+    }
+  ]
 }

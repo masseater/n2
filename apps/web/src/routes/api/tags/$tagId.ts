@@ -3,9 +3,9 @@
  * パス: /api/tags/:tagId
  */
 import { createFileRoute } from "@tanstack/react-router";
-import { withAuth, jsonResponse, errorResponse } from "@/lib/api-utils";
 import { TagService } from "@/features/tasks/service/tag-service";
 import type { CreateTagInput } from "@/features/tasks/types";
+import { errorResponse, jsonResponse, withAuth } from "@/lib/api-utils";
 
 type RouteParams = { tagId: string };
 type UpdateTagInput = Partial<CreateTagInput>;

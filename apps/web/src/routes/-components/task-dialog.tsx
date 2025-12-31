@@ -2,17 +2,17 @@
  * タスク作成・編集ダイアログ
  */
 import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import type { CreateTaskInput, Status, Tag } from "@/features/tasks/types";
 
 type TaskDialogProps = {
@@ -39,7 +39,7 @@ export function TaskDialog({
   const [title, setTitle] = useState(initialData?.title ?? "");
   const [description, setDescription] = useState(initialData?.description ?? "");
   const [statusId, setStatusId] = useState(
-    initialData?.statusId ?? statuses.find((s) => s.type === "todo")?.id ?? ""
+    initialData?.statusId ?? statuses.find((s) => s.type === "todo")?.id ?? "",
   );
   const [priority, setPriority] = useState<number | undefined>(initialData?.priority);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -66,7 +66,7 @@ export function TaskDialog({
 
   const toggleTag = (tagId: string) => {
     setSelectedTags((prev) =>
-      prev.includes(tagId) ? prev.filter((id) => id !== tagId) : [...prev, tagId]
+      prev.includes(tagId) ? prev.filter((id) => id !== tagId) : [...prev, tagId],
     );
   };
 
@@ -75,14 +75,12 @@ export function TaskDialog({
       <DialogContent className="sm:max-w-[500px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>
-              {mode === "create" ? "タスクを作成" : "タスクを編集"}
-            </DialogTitle>
+            <DialogTitle>{mode === "create" ? "タスクを作成" : "タスクを編集"}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">タイトル</label>
+              <span className="text-sm font-medium">タイトル</span>
               <Input
                 placeholder="タスクのタイトル"
                 value={title}
@@ -92,7 +90,7 @@ export function TaskDialog({
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">説明</label>
+              <span className="text-sm font-medium">説明</span>
               <Textarea
                 placeholder="タスクの詳細（任意）"
                 value={description}
@@ -102,7 +100,7 @@ export function TaskDialog({
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">ステータス</label>
+              <span className="text-sm font-medium">ステータス</span>
               <div className="flex flex-wrap gap-2">
                 {statuses.map((status) => (
                   <Button
@@ -119,23 +117,21 @@ export function TaskDialog({
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">優先度 (1-10)</label>
+              <span className="text-sm font-medium">優先度 (1-10)</span>
               <Input
                 type="number"
                 min={1}
                 max={10}
                 placeholder="優先度"
                 value={priority ?? ""}
-                onChange={(e) =>
-                  setPriority(e.target.value ? Number(e.target.value) : undefined)
-                }
+                onChange={(e) => setPriority(e.target.value ? Number(e.target.value) : undefined)}
                 className="w-24"
               />
             </div>
 
             {tags.length > 0 && (
               <div className="space-y-2">
-                <label className="text-sm font-medium">タグ</label>
+                <span className="text-sm font-medium">タグ</span>
                 <div className="flex flex-wrap gap-2">
                   {tags.map((tag) => (
                     <Badge

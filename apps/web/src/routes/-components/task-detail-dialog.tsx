@@ -3,28 +3,20 @@
  * クリック時に即編集可能な状態で表示
  * 日報ノート履歴と説明バージョン履歴は折りたたみで閲覧可能
  */
-import { useState, useEffect } from "react";
+
+import type { TaskDetailWithHistory } from "@n2/shared";
 import { useQuery } from "@tanstack/react-query";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Calendar, Check, ChevronDown, ChevronRight, History, Trash2, X } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Trash2, X, Check, ChevronDown, ChevronRight, Calendar, History } from "lucide-react";
-import type { TaskWithRelations, Status, Tag, UpdateTaskInput } from "@/features/tasks/types";
-import type { TaskDetailWithHistory } from "@n2/shared";
+import { Textarea } from "@/components/ui/textarea";
+import type { Status, Tag, TaskWithRelations, UpdateTaskInput } from "@/features/tasks/types";
 
 type TaskDetailDialogProps = {
   task: TaskWithRelations | null;
@@ -133,7 +125,7 @@ export function TaskDetailDialog({
   const toggleTag = (tagId: string) => {
     markChanged();
     setSelectedTags((prev) =>
-      prev.includes(tagId) ? prev.filter((id) => id !== tagId) : [...prev, tagId]
+      prev.includes(tagId) ? prev.filter((id) => id !== tagId) : [...prev, tagId],
     );
   };
 
@@ -367,15 +359,8 @@ export function TaskDetailDialog({
             )}
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">
-              {hasChanges ? "変更あり" : ""}
-            </span>
-            <Button
-              size="sm"
-              className="h-7"
-              onClick={handleSave}
-              disabled={!title.trim()}
-            >
+            <span className="text-xs text-muted-foreground">{hasChanges ? "変更あり" : ""}</span>
+            <Button size="sm" className="h-7" onClick={handleSave} disabled={!title.trim()}>
               {hasChanges ? "保存して閉じる" : "閉じる"}
             </Button>
           </div>

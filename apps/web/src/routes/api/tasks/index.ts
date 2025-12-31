@@ -3,9 +3,9 @@
  * パス: /api/tasks
  */
 import { createFileRoute } from "@tanstack/react-router";
-import { withAuth, jsonResponse } from "@/lib/api-utils";
 import { TaskService } from "@/features/tasks/service/task-service";
 import type { CreateTaskInput } from "@/features/tasks/types";
+import { jsonResponse, withAuth } from "@/lib/api-utils";
 
 export const Route = createFileRoute("/api/tasks/")({
   server: {
@@ -24,7 +24,7 @@ export const Route = createFileRoute("/api/tasks/")({
 
           const taskService = new TaskService(ctx.db, ctx.userId);
           const tasks = await taskService.list({
-            parentId: parentId === "null" ? null : parentId ?? undefined,
+            parentId: parentId === "null" ? null : (parentId ?? undefined),
             statusIds,
             tagIds,
             priorityMin: priorityMin ? Number.parseInt(priorityMin, 10) : undefined,

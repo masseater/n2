@@ -11,15 +11,9 @@ type ReportGranularitySwitcherProps = {
   onChange: (value: ReportGranularity) => void;
 };
 
-export function ReportGranularitySwitcher({
-  value,
-  onChange,
-}: ReportGranularitySwitcherProps) {
+export function ReportGranularitySwitcher({ value, onChange }: ReportGranularitySwitcherProps) {
   return (
-    <Tabs
-      value={value}
-      onValueChange={(v) => onChange(v as ReportGranularity)}
-    >
+    <Tabs value={value} onValueChange={(v) => onChange(v as ReportGranularity)}>
       <TabsList>
         <TabsTrigger value="day">日</TabsTrigger>
         <TabsTrigger value="week">週</TabsTrigger>

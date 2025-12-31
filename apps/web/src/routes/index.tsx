@@ -2,29 +2,30 @@
  * ダッシュボードページ
  * タスク管理のメインビュー
  */
-import { useState } from "react";
+
+import type { ViewMode } from "@n2/shared";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ViewSwitcher } from "./-components/view-switcher";
-import { TaskList } from "./-components/task-list";
-import { KanbanBoard } from "./-components/kanban-board";
-import { DailyReportView } from "./-components/daily-report-view";
-import { WeeklyReportView } from "./-components/weekly-report-view";
-import { MonthlyReportView } from "./-components/monthly-report-view";
-import type { ReportGranularity } from "./-components/report-granularity-switcher";
-import { TaskDialog } from "./-components/task-dialog";
-import { TaskDetailDialog } from "./-components/task-detail-dialog";
-import type { ViewMode } from "@n2/shared";
+import type { DailyReportWithTasks } from "@/features/daily-reports/types";
 import type {
-  TaskWithRelations,
+  CreateTaskInput,
   Status,
   Tag,
-  CreateTaskInput,
+  TaskWithRelations,
   UpdateTaskInput,
 } from "@/features/tasks/types";
-import type { DailyReportWithTasks } from "@/features/daily-reports/types";
+import { DailyReportView } from "./-components/daily-report-view";
+import { KanbanBoard } from "./-components/kanban-board";
+import { MonthlyReportView } from "./-components/monthly-report-view";
+import type { ReportGranularity } from "./-components/report-granularity-switcher";
+import { TaskDetailDialog } from "./-components/task-detail-dialog";
+import { TaskDialog } from "./-components/task-dialog";
+import { TaskList } from "./-components/task-list";
+import { ViewSwitcher } from "./-components/view-switcher";
+import { WeeklyReportView } from "./-components/weekly-report-view";
 
 export const Route = createFileRoute("/")({
   component: Dashboard,
@@ -66,18 +67,13 @@ function getMonthEnd(date: Date): Date {
 function Dashboard() {
   const [viewMode, setViewMode] = useState<ViewMode>("daily");
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [reportGranularity, setReportGranularity] =
-    useState<ReportGranularity>("day");
+  const [reportGranularity, setReportGranularity] = useState<ReportGranularity>("day");
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
-  const [selectedTask, setSelectedTask] = useState<TaskWithRelations | null>(
-    null
-  );
+  const [selectedTask, setSelectedTask] = useState<TaskWithRelations | null>(null);
   const queryClient = useQueryClient();
 
   // タスク一覧取得
-  const { data: tasks = [], isLoading: tasksLoading } = useQuery<
-    TaskWithRelations[]
-  >({
+  const { data: tasks = [], isLoading: tasksLoading } = useQuery<TaskWithRelations[]>({
     queryKey: ["tasks"],
     queryFn: async () => {
       const res = await fetch("/api/tasks/");
@@ -128,9 +124,7 @@ function Dashboard() {
   const { data: weekReports = [] } = useQuery<DailyReportWithTasks[]>({
     queryKey: ["daily-reports", "range", weekStartStr, weekEndStr],
     queryFn: async () => {
-      const res = await fetch(
-        `/api/daily-reports/?from=${weekStartStr}&to=${weekEndStr}`
-      );
+      const res = await fetch(`/api/daily-reports/?from=${weekStartStr}&to=${weekEndStr}`);
       if (!res.ok) throw new Error("週間日報の取得に失敗");
       return res.json();
     },
@@ -146,9 +140,7 @@ function Dashboard() {
   const { data: monthReports = [] } = useQuery<DailyReportWithTasks[]>({
     queryKey: ["daily-reports", "range", monthStartStr, monthEndStr],
     queryFn: async () => {
-      const res = await fetch(
-        `/api/daily-reports/?from=${monthStartStr}&to=${monthEndStr}`
-      );
+      const res = await fetch(`/api/daily-reports/?from=${monthStartStr}&to=${monthEndStr}`);
       if (!res.ok) throw new Error("月間日報の取得に失敗");
       return res.json();
     },
@@ -238,13 +230,7 @@ function Dashboard() {
 
   // タスクステータス更新
   const updateTaskMutation = useMutation({
-    mutationFn: async ({
-      taskId,
-      statusId,
-    }: {
-      taskId: string;
-      statusId: string;
-    }) => {
+    mutationFn: async ({ taskId, statusId }: { taskId: string; statusId: string }) => {
       const res = await fetch(`/api/tasks/${taskId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -270,13 +256,7 @@ function Dashboard() {
 
   // タスク更新
   const updateTaskMutationFull = useMutation({
-    mutationFn: async ({
-      taskId,
-      input,
-    }: {
-      taskId: string;
-      input: UpdateTaskInput;
-    }) => {
+    mutationFn: async ({ taskId, input }: { taskId: string; input: UpdateTaskInput }) => {
       const res = await fetch(`/api/tasks/${taskId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -337,7 +317,6 @@ function Dashboard() {
           <Button onClick={() => setTaskDialogOpen(true)}>新規タスク</Button>
         </div>
       </div>
-
 
       {tasksLoading ? (
         <Card>

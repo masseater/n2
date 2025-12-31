@@ -1,9 +1,22 @@
-import { eq, and, like, inArray, gte, lte, sql, desc } from "drizzle-orm";
+import type {
+  TaskDescriptionVersion,
+  TaskDetailWithHistory,
+  TaskNoteHistoryEntry,
+} from "@n2/shared";
+import { and, desc, eq, gte, inArray, like, lte, sql } from "drizzle-orm";
+import {
+  dailyReports,
+  dailyReportTasks,
+  statuses,
+  tags,
+  taskDescriptionVersions,
+  tasks,
+  tasksArchive,
+  taskTags,
+} from "@/db/schema";
 import type { ServiceDatabase } from "@/db/types";
-import { tasks, statuses, tags, taskTags, tasksArchive, dailyReportTasks, dailyReports, taskDescriptionVersions } from "@/db/schema";
 import { generateId } from "@/lib/api-utils";
-import type { CreateTaskInput, UpdateTaskInput, TaskFilter, TaskWithRelations } from "../types";
-import type { TaskNoteHistoryEntry, TaskDescriptionVersion, TaskDetailWithHistory } from "@n2/shared";
+import type { CreateTaskInput, TaskFilter, TaskWithRelations, UpdateTaskInput } from "../types";
 
 /**
  * タスクサービス
@@ -12,18 +25,14 @@ import type { TaskNoteHistoryEntry, TaskDescriptionVersion, TaskDetailWithHistor
 export class TaskService {
   constructor(
     private db: ServiceDatabase,
-    private userId: string
+    private userId: string,
   ) {}
 
   /**
    * タスク一覧を取得
    */
   async list(filter?: TaskFilter): Promise<TaskWithRelations[]> {
-    let query = this.db
-      .select()
-      .from(tasks)
-      .where(eq(tasks.userId, this.userId))
-      .$dynamic();
+    let query = this.db.select().from(tasks).where(eq(tasks.userId, this.userId)).$dynamic();
 
     // フィルター適用
     if (filter?.statusIds && filter.statusIds.length > 0) {
@@ -93,9 +102,7 @@ export class TaskService {
     }
 
     // position を計算（同階層の末尾）
-    const position =
-      input.position ??
-      (await this.getNextPosition(input.parentId ?? null));
+    const position = input.position ?? (await this.getNextPosition(input.parentId ?? null));
 
     await this.db.insert(tasks).values({
       id,
@@ -196,9 +203,7 @@ export class TaskService {
     const childTasks = await this.db
       .select()
       .from(tasks)
-      .where(
-        and(eq(tasks.userId, this.userId), like(tasks.path, `%/${taskId}%`))
-      );
+      .where(and(eq(tasks.userId, this.userId), like(tasks.path, `%/${taskId}%`)));
 
     const allTasks = [existing, ...childTasks];
     const now = new Date();
@@ -235,7 +240,7 @@ export class TaskService {
   async move(
     taskId: string,
     newParentId: string | null,
-    newPosition: number
+    newPosition: number,
   ): Promise<TaskWithRelations> {
     const existing = await this.get(taskId);
     if (!existing) {
@@ -263,9 +268,7 @@ export class TaskService {
       const childTasks = await this.db
         .select()
         .from(tasks)
-        .where(
-          and(eq(tasks.userId, this.userId), like(tasks.path, `${oldPathPrefix}%`))
-        );
+        .where(and(eq(tasks.userId, this.userId), like(tasks.path, `${oldPathPrefix}%`)));
 
       for (const child of childTasks) {
         const updatedChildPath = child.path.replace(oldPathPrefix, newPathPrefix);
@@ -357,7 +360,7 @@ export class TaskService {
    * タスクにリレーション（status, tags）を付与
    */
   private async attachRelations(
-    taskList: (typeof tasks.$inferSelect)[]
+    taskList: (typeof tasks.$inferSelect)[],
   ): Promise<TaskWithRelations[]> {
     if (taskList.length === 0) return [];
 
@@ -378,9 +381,7 @@ export class TaskService {
 
     const tagIds = [...new Set(tagRelations.map((r) => r.tagId))];
     const tagList =
-      tagIds.length > 0
-        ? await this.db.select().from(tags).where(inArray(tags.id, tagIds))
-        : [];
+      tagIds.length > 0 ? await this.db.select().from(tags).where(inArray(tags.id, tagIds)) : [];
     const tagMap = new Map(tagList.map((t) => [t.id, t]));
 
     // タスクごとのタグをマップ
@@ -456,12 +457,7 @@ export class TaskService {
       })
       .from(dailyReportTasks)
       .innerJoin(dailyReports, eq(dailyReportTasks.dailyReportId, dailyReports.id))
-      .where(
-        and(
-          eq(dailyReportTasks.taskId, taskId),
-          eq(dailyReports.userId, this.userId)
-        )
-      )
+      .where(and(eq(dailyReportTasks.taskId, taskId), eq(dailyReports.userId, this.userId)))
       .orderBy(desc(dailyReports.date));
 
     return entries.map((entry) => ({

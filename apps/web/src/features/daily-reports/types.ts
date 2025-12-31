@@ -3,11 +3,11 @@
  * 共通型は @n2/shared から import
  */
 export type {
+  CreateDailyReportInput,
   DailyReport,
   DailyReportTaskEntry,
   DailyReportTaskWithNotes,
   DailyReportWithTasks,
-  CreateDailyReportInput,
 } from "@n2/shared";
 
 /**

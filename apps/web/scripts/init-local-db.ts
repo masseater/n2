@@ -6,8 +6,8 @@
 import { eq } from "drizzle-orm";
 import { createSqliteDatabase } from "../src/db";
 import { users } from "../src/db/schema";
-import { StatusService } from "../src/features/tasks/service/status-service";
 import type { ServiceDatabase } from "../src/db/types";
+import { StatusService } from "../src/features/tasks/service/status-service";
 
 const LOCAL_DEV_USER_ID = "local-dev-user";
 const DB_PATH = process.env.LOCAL_DB_PATH ?? "./data/n2.db";

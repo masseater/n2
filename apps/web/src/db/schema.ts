@@ -1,17 +1,29 @@
 import { sql } from "drizzle-orm";
-import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
-// Users table (for better-auth)
+// ============================================================================
+// Authentication Tables (for better-auth)
+// ============================================================================
+
+/**
+ * ユーザー情報テーブル
+ * better-auth が使用する基本的なユーザー情報を保持
+ */
 export const users = sqliteTable("users", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   emailVerified: integer("email_verified", { mode: "boolean" }).notNull().default(false),
   image: text("image"),
+  timezone: text("timezone").default("Asia/Tokyo"),
   createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
   updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
 });
 
+/**
+ * セッション管理テーブル
+ * better-auth のセッショントークンを管理
+ */
 export const sessions = sqliteTable("sessions", {
   id: text("id").primaryKey(),
   userId: text("user_id")
@@ -25,6 +37,10 @@ export const sessions = sqliteTable("sessions", {
   updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
 });
 
+/**
+ * OAuth アカウント連携テーブル
+ * Google OAuth などの外部プロバイダーとの連携情報
+ */
 export const accounts = sqliteTable("accounts", {
   id: text("id").primaryKey(),
   userId: text("user_id")
@@ -43,6 +59,10 @@ export const accounts = sqliteTable("accounts", {
   updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
 });
 
+/**
+ * メール検証テーブル
+ * メールアドレス検証用のトークンを管理
+ */
 export const verifications = sqliteTable("verifications", {
   id: text("id").primaryKey(),
   identifier: text("identifier").notNull(),
@@ -52,29 +72,179 @@ export const verifications = sqliteTable("verifications", {
   updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
 });
 
-// Application tables
-export const tasks = sqliteTable("tasks", {
-  id: text("id").primaryKey(),
-  userId: text("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  title: text("title").notNull(),
-  description: text("description"),
-  status: text("status", { enum: ["todo", "in_progress", "done"] })
-    .notNull()
-    .default("todo"),
-  date: text("date").notNull(), // YYYY-MM-DD format
-  createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
-  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
-});
+// ============================================================================
+// Application Tables
+// ============================================================================
 
-export const dailyReports = sqliteTable("daily_reports", {
-  id: text("id").primaryKey(),
-  userId: text("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  date: text("date").notNull().unique(), // YYYY-MM-DD format
-  summary: text("summary"),
-  createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
-  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
-});
+/**
+ * ステータス種別の列挙型
+ * - todo: 未着手
+ * - in_progress: 作業中
+ * - done: 完了
+ * - custom: ユーザー定義のカスタムステータス
+ */
+export const STATUS_TYPES = ["todo", "in_progress", "done", "custom"] as const;
+
+/**
+ * ステータス管理テーブル
+ * デフォルト3状態（TODO/In Progress/Done）+ ユーザー拡張可能
+ */
+export const statuses = sqliteTable(
+  "statuses",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    position: integer("position").notNull(),
+    isDefault: integer("is_default", { mode: "boolean" }).notNull().default(false),
+    type: text("type", { enum: STATUS_TYPES }).notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+  },
+  (table) => [index("statuses_user_id_idx").on(table.userId)]
+);
+
+/**
+ * タグ管理テーブル
+ * タスクに付与できるラベル（色付き）
+ */
+export const tags = sqliteTable(
+  "tags",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    color: text("color").notNull().default("#6b7280"),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+  },
+  (table) => [index("tags_user_id_idx").on(table.userId)]
+);
+
+/**
+ * タスク管理テーブル
+ * 無限階層対応（materialized path パターン）
+ *
+ * path の形式: /parentId1/parentId2/... (ルートタスクは空文字列)
+ * position: 同階層内での表示順序
+ */
+export const tasks = sqliteTable(
+  "tasks",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    description: text("description"),
+    statusId: text("status_id")
+      .notNull()
+      .references(() => statuses.id),
+    parentId: text("parent_id").references((): ReturnType<typeof text> => tasks.id, {
+      onDelete: "cascade",
+    }),
+    path: text("path").notNull().default(""),
+    position: integer("position").notNull().default(0),
+    priority: integer("priority"),
+    dueDate: integer("due_date", { mode: "timestamp" }),
+    estimatedMinutes: integer("estimated_minutes"),
+    rrule: text("rrule"),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+  },
+  (table) => [
+    index("tasks_user_id_path_idx").on(table.userId, table.path),
+    index("tasks_user_id_status_idx").on(table.userId, table.statusId),
+    index("tasks_user_id_due_date_idx").on(table.userId, table.dueDate),
+    index("tasks_parent_id_idx").on(table.parentId),
+  ]
+);
+
+/**
+ * タスクアーカイブテーブル
+ * 削除されたタスクを保持（ソフトデリート）
+ * 復元可能、定期的にクリーンアップ
+ */
+export const tasksArchive = sqliteTable(
+  "tasks_archive",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    description: text("description"),
+    statusId: text("status_id").notNull(),
+    parentId: text("parent_id"),
+    path: text("path").notNull(),
+    position: integer("position").notNull(),
+    priority: integer("priority"),
+    dueDate: integer("due_date", { mode: "timestamp" }),
+    estimatedMinutes: integer("estimated_minutes"),
+    rrule: text("rrule"),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+    archivedAt: integer("archived_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+  },
+  (table) => [index("tasks_archive_user_id_idx").on(table.userId)]
+);
+
+/**
+ * タスク-タグ中間テーブル
+ * 多対多のリレーション
+ */
+export const taskTags = sqliteTable(
+  "task_tags",
+  {
+    taskId: text("task_id")
+      .notNull()
+      .references(() => tasks.id, { onDelete: "cascade" }),
+    tagId: text("tag_id")
+      .notNull()
+      .references(() => tags.id, { onDelete: "cascade" }),
+  },
+  (table) => [primaryKey({ columns: [table.taskId, table.tagId] })]
+);
+
+/**
+ * 日報テーブル
+ * 1日1レコード（ユーザーごと）
+ * notes: Markdown形式の自由記述欄
+ */
+export const dailyReports = sqliteTable(
+  "daily_reports",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    date: text("date").notNull(),
+    notes: text("notes"),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+  },
+  (table) => [index("daily_reports_user_id_date_idx").on(table.userId, table.date)]
+);
+
+/**
+ * 日報-タスク中間テーブル
+ * 日報内のセクション（yesterday/today）とタスクの関連付け
+ */
+export const dailyReportTasks = sqliteTable(
+  "daily_report_tasks",
+  {
+    dailyReportId: text("daily_report_id")
+      .notNull()
+      .references(() => dailyReports.id, { onDelete: "cascade" }),
+    taskId: text("task_id")
+      .notNull()
+      .references(() => tasks.id, { onDelete: "cascade" }),
+    section: text("section", { enum: ["yesterday", "today"] }).notNull(),
+    position: integer("position").notNull().default(0),
+  },
+  (table) => [primaryKey({ columns: [table.dailyReportId, table.taskId] })]
+);

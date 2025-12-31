@@ -8,212 +8,285 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from "./routes/__root";
-import { Route as DemoApiNamesRouteImport } from "./routes/demo/api.names";
-import { Route as DemoStartApiRequestRouteImport } from "./routes/demo/start.api-request";
-import { Route as DemoStartServerFuncsRouteImport } from "./routes/demo/start.server-funcs";
-import { Route as DemoStartSsrDataOnlyRouteImport } from "./routes/demo/start.ssr.data-only";
-import { Route as DemoStartSsrFullSsrRouteImport } from "./routes/demo/start.ssr.full-ssr";
-import { Route as DemoStartSsrIndexRouteImport } from "./routes/demo/start.ssr.index";
-import { Route as DemoStartSsrSpaModeRouteImport } from "./routes/demo/start.ssr.spa-mode";
-import { Route as IndexRouteImport } from "./routes/index";
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiTasksIndexRouteImport } from './routes/api/tasks/index'
+import { Route as ApiTagsIndexRouteImport } from './routes/api/tags/index'
+import { Route as ApiStatusesIndexRouteImport } from './routes/api/statuses/index'
+import { Route as ApiDailyReportsIndexRouteImport } from './routes/api/daily-reports/index'
+import { Route as ApiTasksTaskIdRouteImport } from './routes/api/tasks/$taskId'
+import { Route as ApiTagsTagIdRouteImport } from './routes/api/tags/$tagId'
+import { Route as ApiStatusesStatusIdRouteImport } from './routes/api/statuses/$statusId'
+import { Route as ApiDailyReportsDateRouteImport } from './routes/api/daily-reports/$date'
+import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ApiDailyReportsDateTasksRouteImport } from './routes/api/daily-reports/$date.tasks'
 
 const IndexRoute = IndexRouteImport.update({
-  id: "/",
-  path: "/",
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
-} as any);
-const DemoStartServerFuncsRoute = DemoStartServerFuncsRouteImport.update({
-  id: "/demo/start/server-funcs",
-  path: "/demo/start/server-funcs",
+} as any)
+const ApiTasksIndexRoute = ApiTasksIndexRouteImport.update({
+  id: '/api/tasks/',
+  path: '/api/tasks/',
   getParentRoute: () => rootRouteImport,
-} as any);
-const DemoStartApiRequestRoute = DemoStartApiRequestRouteImport.update({
-  id: "/demo/start/api-request",
-  path: "/demo/start/api-request",
+} as any)
+const ApiTagsIndexRoute = ApiTagsIndexRouteImport.update({
+  id: '/api/tags/',
+  path: '/api/tags/',
   getParentRoute: () => rootRouteImport,
-} as any);
-const DemoApiNamesRoute = DemoApiNamesRouteImport.update({
-  id: "/demo/api/names",
-  path: "/demo/api/names",
+} as any)
+const ApiStatusesIndexRoute = ApiStatusesIndexRouteImport.update({
+  id: '/api/statuses/',
+  path: '/api/statuses/',
   getParentRoute: () => rootRouteImport,
-} as any);
-const DemoStartSsrIndexRoute = DemoStartSsrIndexRouteImport.update({
-  id: "/demo/start/ssr/",
-  path: "/demo/start/ssr/",
+} as any)
+const ApiDailyReportsIndexRoute = ApiDailyReportsIndexRouteImport.update({
+  id: '/api/daily-reports/',
+  path: '/api/daily-reports/',
   getParentRoute: () => rootRouteImport,
-} as any);
-const DemoStartSsrSpaModeRoute = DemoStartSsrSpaModeRouteImport.update({
-  id: "/demo/start/ssr/spa-mode",
-  path: "/demo/start/ssr/spa-mode",
+} as any)
+const ApiTasksTaskIdRoute = ApiTasksTaskIdRouteImport.update({
+  id: '/api/tasks/$taskId',
+  path: '/api/tasks/$taskId',
   getParentRoute: () => rootRouteImport,
-} as any);
-const DemoStartSsrFullSsrRoute = DemoStartSsrFullSsrRouteImport.update({
-  id: "/demo/start/ssr/full-ssr",
-  path: "/demo/start/ssr/full-ssr",
+} as any)
+const ApiTagsTagIdRoute = ApiTagsTagIdRouteImport.update({
+  id: '/api/tags/$tagId',
+  path: '/api/tags/$tagId',
   getParentRoute: () => rootRouteImport,
-} as any);
-const DemoStartSsrDataOnlyRoute = DemoStartSsrDataOnlyRouteImport.update({
-  id: "/demo/start/ssr/data-only",
-  path: "/demo/start/ssr/data-only",
+} as any)
+const ApiStatusesStatusIdRoute = ApiStatusesStatusIdRouteImport.update({
+  id: '/api/statuses/$statusId',
+  path: '/api/statuses/$statusId',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
+const ApiDailyReportsDateRoute = ApiDailyReportsDateRouteImport.update({
+  id: '/api/daily-reports/$date',
+  path: '/api/daily-reports/$date',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
+  id: '/api/auth/$',
+  path: '/api/auth/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiDailyReportsDateTasksRoute =
+  ApiDailyReportsDateTasksRouteImport.update({
+    id: '/tasks',
+    path: '/tasks',
+    getParentRoute: () => ApiDailyReportsDateRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
-  "/": typeof IndexRoute;
-  "/demo/api/names": typeof DemoApiNamesRoute;
-  "/demo/start/api-request": typeof DemoStartApiRequestRoute;
-  "/demo/start/server-funcs": typeof DemoStartServerFuncsRoute;
-  "/demo/start/ssr/data-only": typeof DemoStartSsrDataOnlyRoute;
-  "/demo/start/ssr/full-ssr": typeof DemoStartSsrFullSsrRoute;
-  "/demo/start/ssr/spa-mode": typeof DemoStartSsrSpaModeRoute;
-  "/demo/start/ssr": typeof DemoStartSsrIndexRoute;
+  '/': typeof IndexRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/daily-reports/$date': typeof ApiDailyReportsDateRouteWithChildren
+  '/api/statuses/$statusId': typeof ApiStatusesStatusIdRoute
+  '/api/tags/$tagId': typeof ApiTagsTagIdRoute
+  '/api/tasks/$taskId': typeof ApiTasksTaskIdRoute
+  '/api/daily-reports': typeof ApiDailyReportsIndexRoute
+  '/api/statuses': typeof ApiStatusesIndexRoute
+  '/api/tags': typeof ApiTagsIndexRoute
+  '/api/tasks': typeof ApiTasksIndexRoute
+  '/api/daily-reports/$date/tasks': typeof ApiDailyReportsDateTasksRoute
 }
 export interface FileRoutesByTo {
-  "/": typeof IndexRoute;
-  "/demo/api/names": typeof DemoApiNamesRoute;
-  "/demo/start/api-request": typeof DemoStartApiRequestRoute;
-  "/demo/start/server-funcs": typeof DemoStartServerFuncsRoute;
-  "/demo/start/ssr/data-only": typeof DemoStartSsrDataOnlyRoute;
-  "/demo/start/ssr/full-ssr": typeof DemoStartSsrFullSsrRoute;
-  "/demo/start/ssr/spa-mode": typeof DemoStartSsrSpaModeRoute;
-  "/demo/start/ssr": typeof DemoStartSsrIndexRoute;
+  '/': typeof IndexRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/daily-reports/$date': typeof ApiDailyReportsDateRouteWithChildren
+  '/api/statuses/$statusId': typeof ApiStatusesStatusIdRoute
+  '/api/tags/$tagId': typeof ApiTagsTagIdRoute
+  '/api/tasks/$taskId': typeof ApiTasksTaskIdRoute
+  '/api/daily-reports': typeof ApiDailyReportsIndexRoute
+  '/api/statuses': typeof ApiStatusesIndexRoute
+  '/api/tags': typeof ApiTagsIndexRoute
+  '/api/tasks': typeof ApiTasksIndexRoute
+  '/api/daily-reports/$date/tasks': typeof ApiDailyReportsDateTasksRoute
 }
 export interface FileRoutesById {
-  __root__: typeof rootRouteImport;
-  "/": typeof IndexRoute;
-  "/demo/api/names": typeof DemoApiNamesRoute;
-  "/demo/start/api-request": typeof DemoStartApiRequestRoute;
-  "/demo/start/server-funcs": typeof DemoStartServerFuncsRoute;
-  "/demo/start/ssr/data-only": typeof DemoStartSsrDataOnlyRoute;
-  "/demo/start/ssr/full-ssr": typeof DemoStartSsrFullSsrRoute;
-  "/demo/start/ssr/spa-mode": typeof DemoStartSsrSpaModeRoute;
-  "/demo/start/ssr/": typeof DemoStartSsrIndexRoute;
+  __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/daily-reports/$date': typeof ApiDailyReportsDateRouteWithChildren
+  '/api/statuses/$statusId': typeof ApiStatusesStatusIdRoute
+  '/api/tags/$tagId': typeof ApiTagsTagIdRoute
+  '/api/tasks/$taskId': typeof ApiTasksTaskIdRoute
+  '/api/daily-reports/': typeof ApiDailyReportsIndexRoute
+  '/api/statuses/': typeof ApiStatusesIndexRoute
+  '/api/tags/': typeof ApiTagsIndexRoute
+  '/api/tasks/': typeof ApiTasksIndexRoute
+  '/api/daily-reports/$date/tasks': typeof ApiDailyReportsDateTasksRoute
 }
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath;
+  fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | "/"
-    | "/demo/api/names"
-    | "/demo/start/api-request"
-    | "/demo/start/server-funcs"
-    | "/demo/start/ssr/data-only"
-    | "/demo/start/ssr/full-ssr"
-    | "/demo/start/ssr/spa-mode"
-    | "/demo/start/ssr";
-  fileRoutesByTo: FileRoutesByTo;
+    | '/'
+    | '/api/auth/$'
+    | '/api/daily-reports/$date'
+    | '/api/statuses/$statusId'
+    | '/api/tags/$tagId'
+    | '/api/tasks/$taskId'
+    | '/api/daily-reports'
+    | '/api/statuses'
+    | '/api/tags'
+    | '/api/tasks'
+    | '/api/daily-reports/$date/tasks'
+  fileRoutesByTo: FileRoutesByTo
   to:
-    | "/"
-    | "/demo/api/names"
-    | "/demo/start/api-request"
-    | "/demo/start/server-funcs"
-    | "/demo/start/ssr/data-only"
-    | "/demo/start/ssr/full-ssr"
-    | "/demo/start/ssr/spa-mode"
-    | "/demo/start/ssr";
+    | '/'
+    | '/api/auth/$'
+    | '/api/daily-reports/$date'
+    | '/api/statuses/$statusId'
+    | '/api/tags/$tagId'
+    | '/api/tasks/$taskId'
+    | '/api/daily-reports'
+    | '/api/statuses'
+    | '/api/tags'
+    | '/api/tasks'
+    | '/api/daily-reports/$date/tasks'
   id:
-    | "__root__"
-    | "/"
-    | "/demo/api/names"
-    | "/demo/start/api-request"
-    | "/demo/start/server-funcs"
-    | "/demo/start/ssr/data-only"
-    | "/demo/start/ssr/full-ssr"
-    | "/demo/start/ssr/spa-mode"
-    | "/demo/start/ssr/";
-  fileRoutesById: FileRoutesById;
+    | '__root__'
+    | '/'
+    | '/api/auth/$'
+    | '/api/daily-reports/$date'
+    | '/api/statuses/$statusId'
+    | '/api/tags/$tagId'
+    | '/api/tasks/$taskId'
+    | '/api/daily-reports/'
+    | '/api/statuses/'
+    | '/api/tags/'
+    | '/api/tasks/'
+    | '/api/daily-reports/$date/tasks'
+  fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute;
-  DemoApiNamesRoute: typeof DemoApiNamesRoute;
-  DemoStartApiRequestRoute: typeof DemoStartApiRequestRoute;
-  DemoStartServerFuncsRoute: typeof DemoStartServerFuncsRoute;
-  DemoStartSsrDataOnlyRoute: typeof DemoStartSsrDataOnlyRoute;
-  DemoStartSsrFullSsrRoute: typeof DemoStartSsrFullSsrRoute;
-  DemoStartSsrSpaModeRoute: typeof DemoStartSsrSpaModeRoute;
-  DemoStartSsrIndexRoute: typeof DemoStartSsrIndexRoute;
+  IndexRoute: typeof IndexRoute
+  ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiDailyReportsDateRoute: typeof ApiDailyReportsDateRouteWithChildren
+  ApiStatusesStatusIdRoute: typeof ApiStatusesStatusIdRoute
+  ApiTagsTagIdRoute: typeof ApiTagsTagIdRoute
+  ApiTasksTaskIdRoute: typeof ApiTasksTaskIdRoute
+  ApiDailyReportsIndexRoute: typeof ApiDailyReportsIndexRoute
+  ApiStatusesIndexRoute: typeof ApiStatusesIndexRoute
+  ApiTagsIndexRoute: typeof ApiTagsIndexRoute
+  ApiTasksIndexRoute: typeof ApiTasksIndexRoute
 }
 
-declare module "@tanstack/react-router" {
+declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    "/": {
-      id: "/";
-      path: "/";
-      fullPath: "/";
-      preLoaderRoute: typeof IndexRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/demo/start/server-funcs": {
-      id: "/demo/start/server-funcs";
-      path: "/demo/start/server-funcs";
-      fullPath: "/demo/start/server-funcs";
-      preLoaderRoute: typeof DemoStartServerFuncsRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/demo/start/api-request": {
-      id: "/demo/start/api-request";
-      path: "/demo/start/api-request";
-      fullPath: "/demo/start/api-request";
-      preLoaderRoute: typeof DemoStartApiRequestRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/demo/api/names": {
-      id: "/demo/api/names";
-      path: "/demo/api/names";
-      fullPath: "/demo/api/names";
-      preLoaderRoute: typeof DemoApiNamesRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/demo/start/ssr/": {
-      id: "/demo/start/ssr/";
-      path: "/demo/start/ssr";
-      fullPath: "/demo/start/ssr";
-      preLoaderRoute: typeof DemoStartSsrIndexRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/demo/start/ssr/spa-mode": {
-      id: "/demo/start/ssr/spa-mode";
-      path: "/demo/start/ssr/spa-mode";
-      fullPath: "/demo/start/ssr/spa-mode";
-      preLoaderRoute: typeof DemoStartSsrSpaModeRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/demo/start/ssr/full-ssr": {
-      id: "/demo/start/ssr/full-ssr";
-      path: "/demo/start/ssr/full-ssr";
-      fullPath: "/demo/start/ssr/full-ssr";
-      preLoaderRoute: typeof DemoStartSsrFullSsrRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/demo/start/ssr/data-only": {
-      id: "/demo/start/ssr/data-only";
-      path: "/demo/start/ssr/data-only";
-      fullPath: "/demo/start/ssr/data-only";
-      preLoaderRoute: typeof DemoStartSsrDataOnlyRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/tasks/': {
+      id: '/api/tasks/'
+      path: '/api/tasks'
+      fullPath: '/api/tasks'
+      preLoaderRoute: typeof ApiTasksIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/tags/': {
+      id: '/api/tags/'
+      path: '/api/tags'
+      fullPath: '/api/tags'
+      preLoaderRoute: typeof ApiTagsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/statuses/': {
+      id: '/api/statuses/'
+      path: '/api/statuses'
+      fullPath: '/api/statuses'
+      preLoaderRoute: typeof ApiStatusesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/daily-reports/': {
+      id: '/api/daily-reports/'
+      path: '/api/daily-reports'
+      fullPath: '/api/daily-reports'
+      preLoaderRoute: typeof ApiDailyReportsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/tasks/$taskId': {
+      id: '/api/tasks/$taskId'
+      path: '/api/tasks/$taskId'
+      fullPath: '/api/tasks/$taskId'
+      preLoaderRoute: typeof ApiTasksTaskIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/tags/$tagId': {
+      id: '/api/tags/$tagId'
+      path: '/api/tags/$tagId'
+      fullPath: '/api/tags/$tagId'
+      preLoaderRoute: typeof ApiTagsTagIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/statuses/$statusId': {
+      id: '/api/statuses/$statusId'
+      path: '/api/statuses/$statusId'
+      fullPath: '/api/statuses/$statusId'
+      preLoaderRoute: typeof ApiStatusesStatusIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/daily-reports/$date': {
+      id: '/api/daily-reports/$date'
+      path: '/api/daily-reports/$date'
+      fullPath: '/api/daily-reports/$date'
+      preLoaderRoute: typeof ApiDailyReportsDateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/$': {
+      id: '/api/auth/$'
+      path: '/api/auth/$'
+      fullPath: '/api/auth/$'
+      preLoaderRoute: typeof ApiAuthSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/daily-reports/$date/tasks': {
+      id: '/api/daily-reports/$date/tasks'
+      path: '/tasks'
+      fullPath: '/api/daily-reports/$date/tasks'
+      preLoaderRoute: typeof ApiDailyReportsDateTasksRouteImport
+      parentRoute: typeof ApiDailyReportsDateRoute
+    }
   }
 }
 
+interface ApiDailyReportsDateRouteChildren {
+  ApiDailyReportsDateTasksRoute: typeof ApiDailyReportsDateTasksRoute
+}
+
+const ApiDailyReportsDateRouteChildren: ApiDailyReportsDateRouteChildren = {
+  ApiDailyReportsDateTasksRoute: ApiDailyReportsDateTasksRoute,
+}
+
+const ApiDailyReportsDateRouteWithChildren =
+  ApiDailyReportsDateRoute._addFileChildren(ApiDailyReportsDateRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  DemoApiNamesRoute: DemoApiNamesRoute,
-  DemoStartApiRequestRoute: DemoStartApiRequestRoute,
-  DemoStartServerFuncsRoute: DemoStartServerFuncsRoute,
-  DemoStartSsrDataOnlyRoute: DemoStartSsrDataOnlyRoute,
-  DemoStartSsrFullSsrRoute: DemoStartSsrFullSsrRoute,
-  DemoStartSsrSpaModeRoute: DemoStartSsrSpaModeRoute,
-  DemoStartSsrIndexRoute: DemoStartSsrIndexRoute,
-};
+  ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiDailyReportsDateRoute: ApiDailyReportsDateRouteWithChildren,
+  ApiStatusesStatusIdRoute: ApiStatusesStatusIdRoute,
+  ApiTagsTagIdRoute: ApiTagsTagIdRoute,
+  ApiTasksTaskIdRoute: ApiTasksTaskIdRoute,
+  ApiDailyReportsIndexRoute: ApiDailyReportsIndexRoute,
+  ApiStatusesIndexRoute: ApiStatusesIndexRoute,
+  ApiTagsIndexRoute: ApiTagsIndexRoute,
+  ApiTasksIndexRoute: ApiTasksIndexRoute,
+}
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>();
+  ._addFileTypes<FileRouteTypes>()
 
-import type { getRouter } from "./router.tsx";
-
-declare module "@tanstack/react-start" {
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
   interface Register {
-    ssr: true;
-    router: Awaited<ReturnType<typeof getRouter>>;
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
   }
 }

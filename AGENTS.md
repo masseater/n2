@@ -56,7 +56,27 @@ pnpm build        # ビルド
 pnpm lint         # Biome lint
 pnpm lint:fix     # Biome lint (自動修正)
 pnpm format       # Biome format
+pnpm check-types  # 型チェック (tsgo)
 pnpm test         # テスト実行
 pnpm db:generate  # Drizzle マイグレーション生成
 pnpm db:migrate   # マイグレーション適用
+pnpm db:studio    # Drizzle Studio (DB ブラウザ)
+
+# 単一テストファイル実行
+pnpm --filter @n2/web exec vitest run src/path/to/file.test.ts
+
+# テスト watch モード
+pnpm --filter @n2/web exec vitest
+
+# 特定パッケージのみ対象
+pnpm --filter @n2/web dev
+pnpm --filter @n2/shared build
 ```
+
+## Packages
+
+| Package | Description |
+|---------|-------------|
+| `@n2/web` | TanStack Start Web アプリケーション |
+| `@n2/shared` | 共通型定義・ユーティリティ |
+| `@n2/tsconfig` | 共通 TypeScript 設定 |

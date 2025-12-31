@@ -1,4 +1,5 @@
 import { eq, and, gte, lte, inArray } from "drizzle-orm";
+import { format, subDays, parse } from "date-fns";
 import type { ServiceDatabase } from "../../../db/types";
 import { dailyReports, dailyReportTasks, tasks, statuses, tags, taskTags } from "../../../db/schema";
 import { generateId } from "../../../lib/api-utils";
@@ -7,14 +8,42 @@ import type {
   DailyReportWithTasks,
   CreateDailyReportInput,
   UpdateDailyReportInput,
-  AddTaskToDailyReportInput,
-  DailyReportSection,
 } from "../types";
 import type { TaskWithRelations } from "../../tasks/types";
+import type { DailyReportTaskWithNotes } from "@n2/shared";
+
+const DATE_FORMAT = "yyyy-MM-dd";
+
+/**
+ * YYYY-MM-DD 文字列をDateに変換
+ */
+function parseDate(dateStr: string): Date {
+  return parse(dateStr, DATE_FORMAT, new Date());
+}
+
+/**
+ * DateをYYYY-MM-DD文字列に変換
+ */
+function formatDate(date: Date): string {
+  return format(date, DATE_FORMAT);
+}
+
+/**
+ * 1日前の日付文字列を取得
+ */
+function getYesterdayDateString(dateStr: string): string {
+  return formatDate(subDays(parseDate(dateStr), 1));
+}
 
 /**
  * 日報サービス
- * 日報の CRUD 操作とビジネスロジックを提供
+ * タスク主軸の日報管理
+ *
+ * 表示条件:
+ * 1. In Progress のタスク → 常に表示
+ * 2. 昨日 Done になったタスク → 表示
+ * 3. 今日 Done になったタスク → 表示
+ * 4. 2日以上前に Done になったタスク → 表示しない
  */
 export class DailyReportService {
   constructor(
@@ -117,41 +146,117 @@ export class DailyReportService {
   }
 
   /**
-   * 日報にタスクを追加
+   * タスクのノートを更新
    */
-  async addTask(date: string, input: AddTaskToDailyReportInput): Promise<void> {
+  async updateTaskNote(
+    date: string,
+    taskId: string,
+    field: "yesterdayNote" | "todayNote",
+    value: string | null
+  ): Promise<void> {
     const report = await this.getOrCreate(date);
 
-    // 同セクションの最後の position を取得
-    const existingTasks = await this.db
+    // 既存エントリを確認
+    const [existing] = await this.db
       .select()
       .from(dailyReportTasks)
       .where(
         and(
           eq(dailyReportTasks.dailyReportId, report.id),
-          eq(dailyReportTasks.section, input.section)
+          eq(dailyReportTasks.taskId, taskId)
         )
       );
 
-    const maxPosition = existingTasks.reduce((max, t) => Math.max(max, t.position), -1);
-    const position = input.position ?? maxPosition + 1;
+    if (existing) {
+      // 更新
+      await this.db
+        .update(dailyReportTasks)
+        .set({ [field]: value })
+        .where(
+          and(
+            eq(dailyReportTasks.dailyReportId, report.id),
+            eq(dailyReportTasks.taskId, taskId)
+          )
+        );
+    } else {
+      // 新規作成: タスクの現在のステータスをスナップショット
+      const [task] = await this.db
+        .select()
+        .from(tasks)
+        .where(eq(tasks.id, taskId));
 
-    await this.db
-      .insert(dailyReportTasks)
-      .values({
+      if (!task) {
+        throw new Error("タスクが見つかりません");
+      }
+
+      const maxPosition = await this.getMaxPosition(report.id);
+      await this.db.insert(dailyReportTasks).values({
         dailyReportId: report.id,
-        taskId: input.taskId,
-        section: input.section,
-        position,
-      })
-      .onConflictDoUpdate({
-        target: [dailyReportTasks.dailyReportId, dailyReportTasks.taskId],
-        set: { section: input.section, position },
+        taskId,
+        statusId: task.statusId,
+        yesterdayNote: field === "yesterdayNote" ? value : null,
+        todayNote: field === "todayNote" ? value : null,
+        position: maxPosition + 1,
       });
+    }
   }
 
   /**
-   * 日報からタスクを削除
+   * 日報エントリの次のステータスを更新
+   * 今日以降に反映されるステータス変更
+   */
+  async updateNextStatus(
+    date: string,
+    taskId: string,
+    nextStatusId: string | null
+  ): Promise<void> {
+    const report = await this.getOrCreate(date);
+
+    // 既存エントリを確認
+    const [existing] = await this.db
+      .select()
+      .from(dailyReportTasks)
+      .where(
+        and(
+          eq(dailyReportTasks.dailyReportId, report.id),
+          eq(dailyReportTasks.taskId, taskId)
+        )
+      );
+
+    if (existing) {
+      await this.db
+        .update(dailyReportTasks)
+        .set({ nextStatusId })
+        .where(
+          and(
+            eq(dailyReportTasks.dailyReportId, report.id),
+            eq(dailyReportTasks.taskId, taskId)
+          )
+        );
+    } else {
+      // 新規作成: タスクの現在のステータスをスナップショット
+      const [task] = await this.db
+        .select()
+        .from(tasks)
+        .where(eq(tasks.id, taskId));
+
+      if (!task) {
+        throw new Error("タスクが見つかりません");
+      }
+
+      const maxPosition = await this.getMaxPosition(report.id);
+      await this.db.insert(dailyReportTasks).values({
+        dailyReportId: report.id,
+        taskId,
+        statusId: task.statusId,
+        nextStatusId,
+        position: maxPosition + 1,
+      });
+    }
+  }
+
+  /**
+   * 日報からタスクを削除（手動追加分のみ）
    */
   async removeTask(date: string, taskId: string): Promise<void> {
     const report = await this.getByDate(date);
@@ -170,80 +275,130 @@ export class DailyReportService {
   }
 
   /**
-   * 日報内タスクの並べ替え
-   */
-  async reorderTask(
-    date: string,
-    taskId: string,
-    section: DailyReportSection,
-    newPosition: number
-  ): Promise<void> {
-    const report = await this.getByDate(date);
-    if (!report) {
-      throw new Error("日報が見つかりません");
-    }
-
-    await this.db
-      .update(dailyReportTasks)
-      .set({ section, position: newPosition })
-      .where(
-        and(
-          eq(dailyReportTasks.dailyReportId, report.id),
-          eq(dailyReportTasks.taskId, taskId)
-        )
-      );
-  }
-
-  /**
    * 日報にタスク情報を付与
+   * 表示条件に基づいてタスクを自動収集
    */
   private async attachTasks(report: DailyReport): Promise<DailyReportWithTasks> {
-    // 日報に紐づくタスク参照を取得
-    const taskRelations = await this.db
+    const yesterdayDateStr = getYesterdayDateString(report.date);
+
+    // 全タスクを取得
+    const allTasks = await this.db
+      .select()
+      .from(tasks)
+      .where(eq(tasks.userId, this.userId));
+
+    // ステータス一覧を取得
+    const statusList = await this.db
+      .select()
+      .from(statuses)
+      .where(eq(statuses.userId, this.userId));
+    const statusMap = new Map(statusList.map((s) => [s.id, s]));
+
+    // 表示対象のタスクを抽出
+    const displayTaskIds = new Set<string>();
+
+    for (const task of allTasks) {
+      const status = statusMap.get(task.statusId);
+      if (!status) continue;
+
+      // Done タスクは表示しない
+      if (status.type === "done") {
+        continue;
+      }
+
+      // In Progress / TODO タスク → 表示
+      displayTaskIds.add(task.id);
+    }
+
+    // 手動追加されたタスクも含める
+    const manualEntries = await this.db
       .select()
       .from(dailyReportTasks)
       .where(eq(dailyReportTasks.dailyReportId, report.id))
       .orderBy(dailyReportTasks.position);
 
-    if (taskRelations.length === 0) {
-      return {
-        ...report,
-        yesterdayTasks: [],
-        todayTasks: [],
-      };
+    for (const entry of manualEntries) {
+      displayTaskIds.add(entry.taskId);
     }
 
-    const taskIds = taskRelations.map((r) => r.taskId);
+    // エントリマップを作成（statusId, nextStatusId も含む）
+    const entryMap = new Map(manualEntries.map((e) => [e.taskId, e]));
 
-    // タスク詳細を取得
-    const taskList = await this.db
+    // 昨日の日報から todayNote と nextStatusId を取得
+    // - todayNote: 今日の yesterdayNote のデフォルト値として使用
+    // - nextStatusId: 今日のステータススナップショットの初期値として使用
+    const [yesterdayReport] = await this.db
       .select()
-      .from(tasks)
-      .where(inArray(tasks.id, taskIds));
+      .from(dailyReports)
+      .where(
+        and(eq(dailyReports.userId, this.userId), eq(dailyReports.date, yesterdayDateStr))
+      );
 
-    // リレーションを付与
-    const tasksWithRelations = await this.attachTaskRelations(taskList);
-    const taskMap = new Map(tasksWithRelations.map((t) => [t.id, t]));
-
-    // セクションごとに分類
-    const yesterdayTasks: TaskWithRelations[] = [];
-    const todayTasks: TaskWithRelations[] = [];
-
-    for (const relation of taskRelations) {
-      const task = taskMap.get(relation.taskId);
-      if (task) {
-        if (relation.section === "yesterday") {
-          yesterdayTasks.push(task);
-        } else {
-          todayTasks.push(task);
-        }
+    const yesterdayEntryMap = new Map<string, { todayNote: string | null; nextStatusId: string | null }>();
+    if (yesterdayReport) {
+      const yesterdayEntries = await this.db
+        .select()
+        .from(dailyReportTasks)
+        .where(eq(dailyReportTasks.dailyReportId, yesterdayReport.id));
+      for (const entry of yesterdayEntries) {
+        yesterdayEntryMap.set(entry.taskId, {
+          todayNote: entry.todayNote,
+          nextStatusId: entry.nextStatusId,
+        });
       }
     }
 
+    // 対象タスクを取得してリレーションを付与
+    const targetTasks = allTasks.filter((t) => displayTaskIds.has(t.id));
+    const tasksWithRelations = await this.attachTaskRelations(targetTasks);
+
+    // 結果を構築
+    // yesterdayNote がない場合は昨日の todayNote を使用
+    // statusId の優先順位:
+    //   1. 今日のエントリにスナップショットがあればそれ
+    //   2. 昨日の nextStatusId があればそれ（ステータス変更の反映）
+    //   3. タスクの現在のステータス
+    const resultTasks: DailyReportTaskWithNotes[] = tasksWithRelations.map((task) => {
+      const entry = entryMap.get(task.id);
+      const yesterdayEntry = yesterdayEntryMap.get(task.id);
+
+      // スナップショットされたステータスを使用
+      const snapshotStatusId = entry?.statusId ?? yesterdayEntry?.nextStatusId ?? task.statusId;
+      const snapshotStatus = statusMap.get(snapshotStatusId);
+      if (!snapshotStatus) {
+        throw new Error(`ステータスが見つかりません: ${snapshotStatusId}`);
+      }
+
+      return {
+        ...task,
+        statusId: snapshotStatusId,
+        status: {
+          id: snapshotStatus.id,
+          userId: snapshotStatus.userId,
+          name: snapshotStatus.name,
+          position: snapshotStatus.position,
+          isDefault: snapshotStatus.isDefault,
+          type: snapshotStatus.type,
+          createdAt: snapshotStatus.createdAt,
+          updatedAt: snapshotStatus.updatedAt,
+        },
+        nextStatusId: entry?.nextStatusId ?? null,
+        yesterdayNote: entry?.yesterdayNote ?? yesterdayEntry?.todayNote ?? null,
+        todayNote: entry?.todayNote ?? null,
+      };
+    });
+
+    // In Progress を先に、Done を後にソート
+    resultTasks.sort((a, b) => {
+      const aIsDone = a.status.type === "done";
+      const bIsDone = b.status.type === "done";
+      if (aIsDone !== bIsDone) return aIsDone ? 1 : -1;
+      return 0;
+    });
+
     return {
       ...report,
-      yesterdayTasks,
-      todayTasks,
+      tasks: resultTasks,
     };
   }
 
@@ -315,6 +470,18 @@ export class DailyReportService {
         })),
       };
     });
+  }
+
+  /**
+   * 日報内の最大 position を取得
+   */
+  private async getMaxPosition(reportId: string): Promise<number> {
+    const entries = await this.db
+      .select()
+      .from(dailyReportTasks)
+      .where(eq(dailyReportTasks.dailyReportId, reportId));
+
+    return entries.reduce((max, e) => Math.max(max, e.position), -1);
   }
 
   /**

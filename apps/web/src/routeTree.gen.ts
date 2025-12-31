@@ -17,9 +17,10 @@ import { Route as ApiDailyReportsIndexRouteImport } from './routes/api/daily-rep
 import { Route as ApiTasksTaskIdRouteImport } from './routes/api/tasks/$taskId'
 import { Route as ApiTagsTagIdRouteImport } from './routes/api/tags/$tagId'
 import { Route as ApiStatusesStatusIdRouteImport } from './routes/api/statuses/$statusId'
-import { Route as ApiDailyReportsDateRouteImport } from './routes/api/daily-reports/$date'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
-import { Route as ApiDailyReportsDateTasksRouteImport } from './routes/api/daily-reports/$date.tasks'
+import { Route as ApiDailyReportsDateIndexRouteImport } from './routes/api/daily-reports/$date/index'
+import { Route as ApiTasksTaskIdDetailRouteImport } from './routes/api/tasks/$taskId/detail'
+import { Route as ApiDailyReportsDateTasksRouteImport } from './routes/api/daily-reports/$date/tasks'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -61,69 +62,77 @@ const ApiStatusesStatusIdRoute = ApiStatusesStatusIdRouteImport.update({
   path: '/api/statuses/$statusId',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiDailyReportsDateRoute = ApiDailyReportsDateRouteImport.update({
-  id: '/api/daily-reports/$date',
-  path: '/api/daily-reports/$date',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiDailyReportsDateIndexRoute =
+  ApiDailyReportsDateIndexRouteImport.update({
+    id: '/api/daily-reports/$date/',
+    path: '/api/daily-reports/$date/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiTasksTaskIdDetailRoute = ApiTasksTaskIdDetailRouteImport.update({
+  id: '/detail',
+  path: '/detail',
+  getParentRoute: () => ApiTasksTaskIdRoute,
+} as any)
 const ApiDailyReportsDateTasksRoute =
   ApiDailyReportsDateTasksRouteImport.update({
-    id: '/tasks',
-    path: '/tasks',
-    getParentRoute: () => ApiDailyReportsDateRoute,
+    id: '/api/daily-reports/$date/tasks',
+    path: '/api/daily-reports/$date/tasks',
+    getParentRoute: () => rootRouteImport,
   } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/api/daily-reports/$date': typeof ApiDailyReportsDateRouteWithChildren
   '/api/statuses/$statusId': typeof ApiStatusesStatusIdRoute
   '/api/tags/$tagId': typeof ApiTagsTagIdRoute
-  '/api/tasks/$taskId': typeof ApiTasksTaskIdRoute
+  '/api/tasks/$taskId': typeof ApiTasksTaskIdRouteWithChildren
   '/api/daily-reports': typeof ApiDailyReportsIndexRoute
   '/api/statuses': typeof ApiStatusesIndexRoute
   '/api/tags': typeof ApiTagsIndexRoute
   '/api/tasks': typeof ApiTasksIndexRoute
   '/api/daily-reports/$date/tasks': typeof ApiDailyReportsDateTasksRoute
+  '/api/tasks/$taskId/detail': typeof ApiTasksTaskIdDetailRoute
+  '/api/daily-reports/$date': typeof ApiDailyReportsDateIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/api/daily-reports/$date': typeof ApiDailyReportsDateRouteWithChildren
   '/api/statuses/$statusId': typeof ApiStatusesStatusIdRoute
   '/api/tags/$tagId': typeof ApiTagsTagIdRoute
-  '/api/tasks/$taskId': typeof ApiTasksTaskIdRoute
+  '/api/tasks/$taskId': typeof ApiTasksTaskIdRouteWithChildren
   '/api/daily-reports': typeof ApiDailyReportsIndexRoute
   '/api/statuses': typeof ApiStatusesIndexRoute
   '/api/tags': typeof ApiTagsIndexRoute
   '/api/tasks': typeof ApiTasksIndexRoute
   '/api/daily-reports/$date/tasks': typeof ApiDailyReportsDateTasksRoute
+  '/api/tasks/$taskId/detail': typeof ApiTasksTaskIdDetailRoute
+  '/api/daily-reports/$date': typeof ApiDailyReportsDateIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/api/daily-reports/$date': typeof ApiDailyReportsDateRouteWithChildren
   '/api/statuses/$statusId': typeof ApiStatusesStatusIdRoute
   '/api/tags/$tagId': typeof ApiTagsTagIdRoute
-  '/api/tasks/$taskId': typeof ApiTasksTaskIdRoute
+  '/api/tasks/$taskId': typeof ApiTasksTaskIdRouteWithChildren
   '/api/daily-reports/': typeof ApiDailyReportsIndexRoute
   '/api/statuses/': typeof ApiStatusesIndexRoute
   '/api/tags/': typeof ApiTagsIndexRoute
   '/api/tasks/': typeof ApiTasksIndexRoute
   '/api/daily-reports/$date/tasks': typeof ApiDailyReportsDateTasksRoute
+  '/api/tasks/$taskId/detail': typeof ApiTasksTaskIdDetailRoute
+  '/api/daily-reports/$date/': typeof ApiDailyReportsDateIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/api/auth/$'
-    | '/api/daily-reports/$date'
     | '/api/statuses/$statusId'
     | '/api/tags/$tagId'
     | '/api/tasks/$taskId'
@@ -132,11 +141,12 @@ export interface FileRouteTypes {
     | '/api/tags'
     | '/api/tasks'
     | '/api/daily-reports/$date/tasks'
+    | '/api/tasks/$taskId/detail'
+    | '/api/daily-reports/$date'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/api/auth/$'
-    | '/api/daily-reports/$date'
     | '/api/statuses/$statusId'
     | '/api/tags/$tagId'
     | '/api/tasks/$taskId'
@@ -145,11 +155,12 @@ export interface FileRouteTypes {
     | '/api/tags'
     | '/api/tasks'
     | '/api/daily-reports/$date/tasks'
+    | '/api/tasks/$taskId/detail'
+    | '/api/daily-reports/$date'
   id:
     | '__root__'
     | '/'
     | '/api/auth/$'
-    | '/api/daily-reports/$date'
     | '/api/statuses/$statusId'
     | '/api/tags/$tagId'
     | '/api/tasks/$taskId'
@@ -158,19 +169,22 @@ export interface FileRouteTypes {
     | '/api/tags/'
     | '/api/tasks/'
     | '/api/daily-reports/$date/tasks'
+    | '/api/tasks/$taskId/detail'
+    | '/api/daily-reports/$date/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
-  ApiDailyReportsDateRoute: typeof ApiDailyReportsDateRouteWithChildren
   ApiStatusesStatusIdRoute: typeof ApiStatusesStatusIdRoute
   ApiTagsTagIdRoute: typeof ApiTagsTagIdRoute
-  ApiTasksTaskIdRoute: typeof ApiTasksTaskIdRoute
+  ApiTasksTaskIdRoute: typeof ApiTasksTaskIdRouteWithChildren
   ApiDailyReportsIndexRoute: typeof ApiDailyReportsIndexRoute
   ApiStatusesIndexRoute: typeof ApiStatusesIndexRoute
   ApiTagsIndexRoute: typeof ApiTagsIndexRoute
   ApiTasksIndexRoute: typeof ApiTasksIndexRoute
+  ApiDailyReportsDateTasksRoute: typeof ApiDailyReportsDateTasksRoute
+  ApiDailyReportsDateIndexRoute: typeof ApiDailyReportsDateIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -231,13 +245,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiStatusesStatusIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/daily-reports/$date': {
-      id: '/api/daily-reports/$date'
-      path: '/api/daily-reports/$date'
-      fullPath: '/api/daily-reports/$date'
-      preLoaderRoute: typeof ApiDailyReportsDateRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -245,38 +252,54 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/daily-reports/$date/': {
+      id: '/api/daily-reports/$date/'
+      path: '/api/daily-reports/$date'
+      fullPath: '/api/daily-reports/$date'
+      preLoaderRoute: typeof ApiDailyReportsDateIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/tasks/$taskId/detail': {
+      id: '/api/tasks/$taskId/detail'
+      path: '/detail'
+      fullPath: '/api/tasks/$taskId/detail'
+      preLoaderRoute: typeof ApiTasksTaskIdDetailRouteImport
+      parentRoute: typeof ApiTasksTaskIdRoute
+    }
     '/api/daily-reports/$date/tasks': {
       id: '/api/daily-reports/$date/tasks'
-      path: '/tasks'
+      path: '/api/daily-reports/$date/tasks'
       fullPath: '/api/daily-reports/$date/tasks'
       preLoaderRoute: typeof ApiDailyReportsDateTasksRouteImport
-      parentRoute: typeof ApiDailyReportsDateRoute
+      parentRoute: typeof rootRouteImport
     }
   }
 }
 
-interface ApiDailyReportsDateRouteChildren {
-  ApiDailyReportsDateTasksRoute: typeof ApiDailyReportsDateTasksRoute
+interface ApiTasksTaskIdRouteChildren {
+  ApiTasksTaskIdDetailRoute: typeof ApiTasksTaskIdDetailRoute
 }
 
-const ApiDailyReportsDateRouteChildren: ApiDailyReportsDateRouteChildren = {
-  ApiDailyReportsDateTasksRoute: ApiDailyReportsDateTasksRoute,
+const ApiTasksTaskIdRouteChildren: ApiTasksTaskIdRouteChildren = {
+  ApiTasksTaskIdDetailRoute: ApiTasksTaskIdDetailRoute,
 }
 
-const ApiDailyReportsDateRouteWithChildren =
-  ApiDailyReportsDateRoute._addFileChildren(ApiDailyReportsDateRouteChildren)
+const ApiTasksTaskIdRouteWithChildren = ApiTasksTaskIdRoute._addFileChildren(
+  ApiTasksTaskIdRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
-  ApiDailyReportsDateRoute: ApiDailyReportsDateRouteWithChildren,
   ApiStatusesStatusIdRoute: ApiStatusesStatusIdRoute,
   ApiTagsTagIdRoute: ApiTagsTagIdRoute,
-  ApiTasksTaskIdRoute: ApiTasksTaskIdRoute,
+  ApiTasksTaskIdRoute: ApiTasksTaskIdRouteWithChildren,
   ApiDailyReportsIndexRoute: ApiDailyReportsIndexRoute,
   ApiStatusesIndexRoute: ApiStatusesIndexRoute,
   ApiTagsIndexRoute: ApiTagsIndexRoute,
   ApiTasksIndexRoute: ApiTasksIndexRoute,
+  ApiDailyReportsDateTasksRoute: ApiDailyReportsDateTasksRoute,
+  ApiDailyReportsDateIndexRoute: ApiDailyReportsDateIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

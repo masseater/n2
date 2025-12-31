@@ -67,6 +67,7 @@ export type CreateTagInput = {
 /**
  * タスク
  * 無限階層対応（materialized path パターン）
+ * completedAt: Done ステータスになった日時（日報表示判定に使用）
  */
 export type Task = {
   id: string;
@@ -81,6 +82,7 @@ export type Task = {
   dueDate: Date | null;
   estimatedMinutes: number | null;
   rrule: string | null;
+  completedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -98,6 +100,7 @@ export type CreateTaskInput = {
   dueDate?: Date;
   estimatedMinutes?: number;
   rrule?: string;
+  tagIds?: string[];
 };
 
 /**
@@ -128,9 +131,8 @@ export type ArchivedTask = Task & {
 // ============================================================================
 
 /**
- * 日報セクション種別
- * - yesterday: 昨日やったこと
- * - today: 今日やること
+ * 日報セクション種別（後方互換性のため残す）
+ * @deprecated 新設計ではタスク主軸のため section は使用しない
  */
 export type DailyReportSection = "yesterday" | "today";
 
@@ -148,7 +150,19 @@ export type DailyReport = {
 };
 
 /**
- * 日報内のタスク参照
+ * 日報内のタスクエントリー
+ * タスク主軸: 各タスクに対して昨日/今日のノートを入力
+ */
+export type DailyReportTaskEntry = {
+  dailyReportId: string;
+  taskId: string;
+  yesterdayNote: string | null;
+  todayNote: string | null;
+  position: number;
+};
+
+/**
+ * @deprecated 新設計では DailyReportTaskEntry を使用
  */
 export type DailyReportTask = {
   dailyReportId: string;
@@ -166,11 +180,53 @@ export type CreateDailyReportInput = {
 };
 
 /**
- * 日報とタスクを含む型
+ * 日報用タスク（タスク情報 + 日報ノート + ステータススナップショット）
+ *
+ * statusId/status: その日時点のステータス（スナップショット）
+ * nextStatusId: 日報から設定する次のステータス（今日以降に反映）
+ */
+export type DailyReportTaskWithNotes = TaskWithRelations & {
+  nextStatusId: string | null;
+  yesterdayNote: string | null;
+  todayNote: string | null;
+};
+
+/**
+ * 日報とタスクを含む型（タスク主軸）
  */
 export type DailyReportWithTasks = DailyReport & {
-  yesterdayTasks: TaskWithRelations[];
-  todayTasks: TaskWithRelations[];
+  tasks: DailyReportTaskWithNotes[];
+};
+
+/**
+ * タスクの日報ノート履歴エントリー
+ * 特定タスクの特定日の日報ノート
+ */
+export type TaskNoteHistoryEntry = {
+  date: string;
+  yesterdayNote: string | null;
+  todayNote: string | null;
+};
+
+/**
+ * タスク説明のバージョン
+ * description 保存時に自動的に作成されるバージョン
+ */
+export type TaskDescriptionVersion = {
+  id: string;
+  taskId: string;
+  description: string;
+  version: number;
+  createdAt: Date;
+};
+
+/**
+ * タスク詳細ページ用の拡張情報
+ * タスク基本情報 + 日報ノート履歴 + 説明バージョン履歴
+ */
+export type TaskDetailWithHistory = TaskWithRelations & {
+  noteHistory: TaskNoteHistoryEntry[];
+  descriptionVersions: TaskDescriptionVersion[];
 };
 
 // ============================================================================

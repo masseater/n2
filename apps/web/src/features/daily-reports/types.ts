@@ -4,8 +4,8 @@
  */
 export type {
   DailyReport,
-  DailyReportTask,
-  DailyReportSection,
+  DailyReportTaskEntry,
+  DailyReportTaskWithNotes,
   DailyReportWithTasks,
   CreateDailyReportInput,
 } from "@n2/shared";
@@ -18,26 +18,20 @@ export type UpdateDailyReportInput = {
 };
 
 /**
- * 日報にタスクを追加する入力型
+ * タスクノート更新用の入力型
  */
-export type AddTaskToDailyReportInput = {
+export type UpdateTaskNoteInput = {
   taskId: string;
-  section: "yesterday" | "today";
-  position?: number;
+  field: "yesterdayNote" | "todayNote";
+  value: string | null;
 };
 
 /**
- * 日報からタスクを削除する入力型
+ * 次のステータス更新用の入力型
+ * 日報から設定する次のステータス（今日以降に反映）
  */
-export type RemoveTaskFromDailyReportInput = {
+export type UpdateNextStatusInput = {
   taskId: string;
-};
-
-/**
- * 日報内タスクの並べ替え入力型
- */
-export type ReorderDailyReportTaskInput = {
-  taskId: string;
-  section: "yesterday" | "today";
-  newPosition: number;
+  field: "nextStatus";
+  value: string | null;
 };

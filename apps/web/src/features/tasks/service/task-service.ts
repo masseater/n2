@@ -1,8 +1,9 @@
-import { eq, and, like, inArray, gte, lte, sql } from "drizzle-orm";
-import type { ServiceDatabase } from "../../../db/types";
-import { tasks, statuses, tags, taskTags, tasksArchive } from "../../../db/schema";
-import { generateId } from "../../../lib/api-utils";
+import { eq, and, like, inArray, gte, lte, sql, desc } from "drizzle-orm";
+import type { ServiceDatabase } from "@/db/types";
+import { tasks, statuses, tags, taskTags, tasksArchive, dailyReportTasks, dailyReports, taskDescriptionVersions } from "@/db/schema";
+import { generateId } from "@/lib/api-utils";
 import type { CreateTaskInput, UpdateTaskInput, TaskFilter, TaskWithRelations } from "../types";
+import type { TaskNoteHistoryEntry, TaskDescriptionVersion, TaskDetailWithHistory } from "@n2/shared";
 
 /**
  * タスクサービス
@@ -122,6 +123,9 @@ export class TaskService {
 
   /**
    * タスクを更新
+   * ステータスが Done に変更された場合は completedAt を設定
+   * Done 以外に変更された場合は completedAt を null にリセット
+   * description が変更された場合はバージョンを作成
    */
   async update(taskId: string, input: UpdateTaskInput): Promise<TaskWithRelations> {
     const existing = await this.get(taskId);
@@ -134,13 +138,38 @@ export class TaskService {
     };
 
     if (input.title !== undefined) updateData.title = input.title;
-    if (input.description !== undefined) updateData.description = input.description;
-    if (input.statusId !== undefined) updateData.statusId = input.statusId;
     if (input.priority !== undefined) updateData.priority = input.priority;
     if (input.dueDate !== undefined) updateData.dueDate = input.dueDate;
     if (input.estimatedMinutes !== undefined) updateData.estimatedMinutes = input.estimatedMinutes;
     if (input.rrule !== undefined) updateData.rrule = input.rrule;
     if (input.position !== undefined) updateData.position = input.position;
+
+    // description 変更時はバージョンを作成
+    if (input.description !== undefined && input.description !== existing.description) {
+      updateData.description = input.description;
+      await this.createDescriptionVersion(taskId, input.description);
+    }
+
+    // ステータス変更時の completedAt 処理
+    if (input.statusId !== undefined) {
+      updateData.statusId = input.statusId;
+
+      // 新しいステータスの type を取得
+      const [newStatus] = await this.db
+        .select()
+        .from(statuses)
+        .where(eq(statuses.id, input.statusId));
+
+      if (newStatus) {
+        if (newStatus.type === "done" && existing.status.type !== "done") {
+          // Done に変更: completedAt を設定
+          updateData.completedAt = new Date();
+        } else if (newStatus.type !== "done" && existing.status.type === "done") {
+          // Done 以外に変更: completedAt をリセット
+          updateData.completedAt = null;
+        }
+      }
+    }
 
     await this.db
       .update(tasks)
@@ -392,6 +421,93 @@ export class TaskService {
           updatedAt: tag.updatedAt,
         })),
       };
+    });
+  }
+
+  /**
+   * タスク詳細を履歴付きで取得
+   */
+  async getWithHistory(taskId: string): Promise<TaskDetailWithHistory | null> {
+    const task = await this.get(taskId);
+    if (!task) return null;
+
+    const [noteHistory, descriptionVersions] = await Promise.all([
+      this.getNoteHistory(taskId),
+      this.getDescriptionVersions(taskId),
+    ]);
+
+    return {
+      ...task,
+      noteHistory,
+      descriptionVersions,
+    };
+  }
+
+  /**
+   * タスクの日報ノート履歴を取得
+   * データがある全ての日の昨日やったこと・今日やることを返す
+   */
+  async getNoteHistory(taskId: string): Promise<TaskNoteHistoryEntry[]> {
+    const entries = await this.db
+      .select({
+        date: dailyReports.date,
+        yesterdayNote: dailyReportTasks.yesterdayNote,
+        todayNote: dailyReportTasks.todayNote,
+      })
+      .from(dailyReportTasks)
+      .innerJoin(dailyReports, eq(dailyReportTasks.dailyReportId, dailyReports.id))
+      .where(
+        and(
+          eq(dailyReportTasks.taskId, taskId),
+          eq(dailyReports.userId, this.userId)
+        )
+      )
+      .orderBy(desc(dailyReports.date));
+
+    return entries.map((entry) => ({
+      date: entry.date,
+      yesterdayNote: entry.yesterdayNote,
+      todayNote: entry.todayNote,
+    }));
+  }
+
+  /**
+   * タスクの説明バージョン履歴を取得
+   */
+  async getDescriptionVersions(taskId: string): Promise<TaskDescriptionVersion[]> {
+    const versions = await this.db
+      .select()
+      .from(taskDescriptionVersions)
+      .where(eq(taskDescriptionVersions.taskId, taskId))
+      .orderBy(desc(taskDescriptionVersions.version));
+
+    return versions.map((v) => ({
+      id: v.id,
+      taskId: v.taskId,
+      description: v.description,
+      version: v.version,
+      createdAt: v.createdAt,
+    }));
+  }
+
+  /**
+   * 説明のバージョンを作成
+   */
+  private async createDescriptionVersion(taskId: string, description: string): Promise<void> {
+    // 現在の最大バージョン番号を取得
+    const [maxVersion] = await this.db
+      .select({ max: sql<number>`MAX(${taskDescriptionVersions.version})` })
+      .from(taskDescriptionVersions)
+      .where(eq(taskDescriptionVersions.taskId, taskId));
+
+    const nextVersion = (maxVersion?.max ?? 0) + 1;
+
+    await this.db.insert(taskDescriptionVersions).values({
+      id: generateId(),
+      taskId,
+      description,
+      version: nextVersion,
+      createdAt: new Date(),
     });
   }
 }

@@ -71,6 +71,12 @@ pnpm --filter @n2/web exec vitest
 # 特定パッケージのみ対象
 pnpm --filter @n2/web dev
 pnpm --filter @n2/shared build
+
+# ローカル DB 操作 (SQLite ファイル使用)
+pnpm --filter @n2/web db:generate:local
+pnpm --filter @n2/web db:migrate:local
+pnpm --filter @n2/web db:studio:local
+pnpm --filter @n2/web db:push:local
 ```
 
 ## Packages

@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "aeeba712-3e9c-498c-8873-1b7d1d865ba9",
+  "id": "354da819-909a-40cd-85c6-e5a51d1ef60a",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "accounts": {
@@ -138,11 +138,32 @@
           "notNull": true,
           "autoincrement": false
         },
-        "section": {
-          "name": "section",
+        "status_id": {
+          "name": "status_id",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
+          "autoincrement": false
+        },
+        "next_status_id": {
+          "name": "next_status_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "yesterday_note": {
+          "name": "yesterday_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "today_note": {
+          "name": "today_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
           "autoincrement": false
         },
         "position": {
@@ -180,6 +201,32 @@
             "id"
           ],
           "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "daily_report_tasks_status_id_statuses_id_fk": {
+          "name": "daily_report_tasks_status_id_statuses_id_fk",
+          "tableFrom": "daily_report_tasks",
+          "tableTo": "statuses",
+          "columnsFrom": [
+            "status_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "daily_report_tasks_next_status_id_statuses_id_fk": {
+          "name": "daily_report_tasks_next_status_id_statuses_id_fk",
+          "tableFrom": "daily_report_tasks",
+          "tableTo": "statuses",
+          "columnsFrom": [
+            "next_status_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
@@ -530,6 +577,82 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
+    "task_description_versions": {
+      "name": "task_description_versions",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "task_id": {
+          "name": "task_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        }
+      },
+      "indexes": {
+        "task_description_versions_task_id_idx": {
+          "name": "task_description_versions_task_id_idx",
+          "columns": [
+            "task_id"
+          ],
+          "isUnique": false
+        },
+        "task_description_versions_task_id_version_idx": {
+          "name": "task_description_versions_task_id_version_idx",
+          "columns": [
+            "task_id",
+            "version"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "task_description_versions_task_id_tasks_id_fk": {
+          "name": "task_description_versions_task_id_tasks_id_fk",
+          "tableFrom": "task_description_versions",
+          "tableTo": "tasks",
+          "columnsFrom": [
+            "task_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
     "task_tags": {
       "name": "task_tags",
       "columns": {
@@ -678,6 +801,13 @@
           "notNull": false,
           "autoincrement": false
         },
+        "completed_at": {
+          "name": "completed_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "integer",
@@ -717,6 +847,14 @@
           "columns": [
             "user_id",
             "due_date"
+          ],
+          "isUnique": false
+        },
+        "tasks_user_id_completed_at_idx": {
+          "name": "tasks_user_id_completed_at_idx",
+          "columns": [
+            "user_id",
+            "completed_at"
           ],
           "isUnique": false
         },

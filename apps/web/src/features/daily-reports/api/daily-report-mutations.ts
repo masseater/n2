@@ -1,9 +1,7 @@
 import type {
   CreateDailyReportInput,
   UpdateDailyReportInput,
-  AddTaskToDailyReportInput,
-  RemoveTaskFromDailyReportInput,
-  ReorderDailyReportTaskInput,
+  UpdateTaskNoteInput,
 } from "../types";
 
 const API_BASE = "/api/daily-reports";
@@ -46,58 +44,33 @@ export async function updateDailyReport(date: string, input: UpdateDailyReportIn
 }
 
 /**
- * 日報にタスクを追加 API を呼び出す
+ * タスクノート更新 API を呼び出す
  *
  * @param date - 対象日付（YYYY-MM-DD）
- * @param input - 追加データ
+ * @param input - 更新データ
  */
-export async function addTaskToDailyReport(date: string, input: AddTaskToDailyReportInput) {
+export async function updateTaskNote(date: string, input: UpdateTaskNoteInput) {
   const response = await fetch(`${API_BASE}/${date}/tasks`, {
-    method: "POST",
+    method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
   });
   if (!response.ok) {
-    throw new Error("タスクの追加に失敗しました");
+    throw new Error("タスクノートの更新に失敗しました");
   }
-  return response.json();
 }
 
 /**
  * 日報からタスクを削除 API を呼び出す
  *
  * @param date - 対象日付（YYYY-MM-DD）
- * @param input - 削除データ
+ * @param taskId - 削除するタスクID
  */
-export async function removeTaskFromDailyReport(
-  date: string,
-  input: RemoveTaskFromDailyReportInput
-) {
-  const response = await fetch(`${API_BASE}/${date}/tasks/${input.taskId}`, {
+export async function removeTaskFromDailyReport(date: string, taskId: string) {
+  const response = await fetch(`${API_BASE}/${date}/tasks?taskId=${taskId}`, {
     method: "DELETE",
   });
   if (!response.ok) {
     throw new Error("タスクの削除に失敗しました");
   }
-}
-
-/**
- * 日報内タスクの並べ替え API を呼び出す
- *
- * @param date - 対象日付（YYYY-MM-DD）
- * @param input - 並べ替えデータ
- */
-export async function reorderDailyReportTask(date: string, input: ReorderDailyReportTaskInput) {
-  const response = await fetch(`${API_BASE}/${date}/tasks/${input.taskId}/reorder`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      section: input.section,
-      position: input.newPosition,
-    }),
-  });
-  if (!response.ok) {
-    throw new Error("タスクの並べ替えに失敗しました");
-  }
-  return response.json();
 }

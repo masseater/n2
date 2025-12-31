@@ -131,6 +131,7 @@ export const tags = sqliteTable(
  *
  * path の形式: /parentId1/parentId2/... (ルートタスクは空文字列)
  * position: 同階層内での表示順序
+ * completedAt: Done ステータスに変更された日時（日報表示の判定に使用）
  */
 export const tasks = sqliteTable(
   "tasks",
@@ -153,6 +154,7 @@ export const tasks = sqliteTable(
     dueDate: integer("due_date", { mode: "timestamp" }),
     estimatedMinutes: integer("estimated_minutes"),
     rrule: text("rrule"),
+    completedAt: integer("completed_at", { mode: "timestamp" }),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
     updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
   },
@@ -160,6 +162,7 @@ export const tasks = sqliteTable(
     index("tasks_user_id_path_idx").on(table.userId, table.path),
     index("tasks_user_id_status_idx").on(table.userId, table.statusId),
     index("tasks_user_id_due_date_idx").on(table.userId, table.dueDate),
+    index("tasks_user_id_completed_at_idx").on(table.userId, table.completedAt),
     index("tasks_parent_id_idx").on(table.parentId),
   ]
 );
@@ -232,7 +235,14 @@ export const dailyReports = sqliteTable(
 
 /**
  * 日報-タスク中間テーブル
- * 日報内のセクション（yesterday/today）とタスクの関連付け
+ * 各タスクに対する日報エントリー（昨日やったこと・今日やること）
+ *
+ * タスク主軸の設計:
+ *   タスクA → yesterdayNote: "○○を実装", todayNote: "テストを書く"
+ *   タスクB → yesterdayNote: "調査完了", todayNote: "実装開始"
+ *
+ * statusId: その日時点のステータスをスナップショット保持
+ * nextStatusId: 日報から変更する次のステータス（今日以降に反映）
  */
 export const dailyReportTasks = sqliteTable(
   "daily_report_tasks",
@@ -243,8 +253,35 @@ export const dailyReportTasks = sqliteTable(
     taskId: text("task_id")
       .notNull()
       .references(() => tasks.id, { onDelete: "cascade" }),
-    section: text("section", { enum: ["yesterday", "today"] }).notNull(),
+    statusId: text("status_id")
+      .notNull()
+      .references(() => statuses.id),
+    nextStatusId: text("next_status_id")
+      .references(() => statuses.id),
+    yesterdayNote: text("yesterday_note"),
+    todayNote: text("today_note"),
     position: integer("position").notNull().default(0),
   },
   (table) => [primaryKey({ columns: [table.dailyReportId, table.taskId] })]
+);
+
+/**
+ * タスク説明のバージョン履歴テーブル
+ * description 保存時に自動的にバージョンを作成
+ */
+export const taskDescriptionVersions = sqliteTable(
+  "task_description_versions",
+  {
+    id: text("id").primaryKey(),
+    taskId: text("task_id")
+      .notNull()
+      .references(() => tasks.id, { onDelete: "cascade" }),
+    description: text("description").notNull(),
+    version: integer("version").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+  },
+  (table) => [
+    index("task_description_versions_task_id_idx").on(table.taskId),
+    index("task_description_versions_task_id_version_idx").on(table.taskId, table.version),
+  ]
 );

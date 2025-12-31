@@ -2,16 +2,13 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   createDailyReport,
   updateDailyReport,
-  addTaskToDailyReport,
+  updateTaskNote,
   removeTaskFromDailyReport,
-  reorderDailyReportTask,
 } from "../api/daily-report-mutations";
 import type {
   CreateDailyReportInput,
   UpdateDailyReportInput,
-  AddTaskToDailyReportInput,
-  RemoveTaskFromDailyReportInput,
-  ReorderDailyReportTaskInput,
+  UpdateTaskNoteInput,
 } from "../types";
 
 /**
@@ -44,14 +41,14 @@ export function useUpdateDailyReport() {
 }
 
 /**
- * 日報にタスク追加のミューテーションフック
+ * タスクノート更新のミューテーションフック
  */
-export function useAddTaskToDailyReport() {
+export function useUpdateTaskNote() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ date, input }: { date: string; input: AddTaskToDailyReportInput }) =>
-      addTaskToDailyReport(date, input),
+    mutationFn: ({ date, input }: { date: string; input: UpdateTaskNoteInput }) =>
+      updateTaskNote(date, input),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["daily-reports", variables.date] });
     },
@@ -65,23 +62,8 @@ export function useRemoveTaskFromDailyReport() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ date, input }: { date: string; input: RemoveTaskFromDailyReportInput }) =>
-      removeTaskFromDailyReport(date, input),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["daily-reports", variables.date] });
-    },
-  });
-}
-
-/**
- * 日報内タスク並べ替えのミューテーションフック
- */
-export function useReorderDailyReportTask() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ date, input }: { date: string; input: ReorderDailyReportTaskInput }) =>
-      reorderDailyReportTask(date, input),
+    mutationFn: ({ date, taskId }: { date: string; taskId: string }) =>
+      removeTaskFromDailyReport(date, taskId),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["daily-reports", variables.date] });
     },

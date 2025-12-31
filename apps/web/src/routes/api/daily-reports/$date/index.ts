@@ -9,7 +9,7 @@ import type { UpdateDailyReportInput } from "@/features/daily-reports/types";
 
 type RouteParams = { date: string };
 
-export const Route = createFileRoute("/api/daily-reports/$date")({
+export const Route = createFileRoute("/api/daily-reports/$date/")({
   server: {
     handlers: {
       GET: async ({ request, params }: { request: Request; params: RouteParams }) => {

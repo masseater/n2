@@ -15,6 +15,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.10",
+    "@n2/tsconfig": "workspace:*",
     "@typescript/native-preview": "catalog:",
     "tsx": "4.21.0",
     "turbo": "^2.7.2"

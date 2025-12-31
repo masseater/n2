@@ -18,11 +18,16 @@ CREATE TABLE `accounts` (
 CREATE TABLE `daily_report_tasks` (
 	`daily_report_id` text NOT NULL,
 	`task_id` text NOT NULL,
-	`section` text NOT NULL,
+	`status_id` text NOT NULL,
+	`next_status_id` text,
+	`yesterday_note` text,
+	`today_note` text,
 	`position` integer DEFAULT 0 NOT NULL,
 	PRIMARY KEY(`daily_report_id`, `task_id`),
 	FOREIGN KEY (`daily_report_id`) REFERENCES `daily_reports`(`id`) ON UPDATE no action ON DELETE cascade,
-	FOREIGN KEY (`task_id`) REFERENCES `tasks`(`id`) ON UPDATE no action ON DELETE cascade
+	FOREIGN KEY (`task_id`) REFERENCES `tasks`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`status_id`) REFERENCES `statuses`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`next_status_id`) REFERENCES `statuses`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
 CREATE TABLE `daily_reports` (
@@ -73,6 +78,17 @@ CREATE TABLE `tags` (
 );
 --> statement-breakpoint
 CREATE INDEX `tags_user_id_idx` ON `tags` (`user_id`);--> statement-breakpoint
+CREATE TABLE `task_description_versions` (
+	`id` text PRIMARY KEY NOT NULL,
+	`task_id` text NOT NULL,
+	`description` text NOT NULL,
+	`version` integer NOT NULL,
+	`created_at` integer DEFAULT (unixepoch()) NOT NULL,
+	FOREIGN KEY (`task_id`) REFERENCES `tasks`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE INDEX `task_description_versions_task_id_idx` ON `task_description_versions` (`task_id`);--> statement-breakpoint
+CREATE INDEX `task_description_versions_task_id_version_idx` ON `task_description_versions` (`task_id`,`version`);--> statement-breakpoint
 CREATE TABLE `task_tags` (
 	`task_id` text NOT NULL,
 	`tag_id` text NOT NULL,
@@ -94,6 +110,7 @@ CREATE TABLE `tasks` (
 	`due_date` integer,
 	`estimated_minutes` integer,
 	`rrule` text,
+	`completed_at` integer,
 	`created_at` integer DEFAULT (unixepoch()) NOT NULL,
 	`updated_at` integer DEFAULT (unixepoch()) NOT NULL,
 	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE cascade,
@@ -104,6 +121,7 @@ CREATE TABLE `tasks` (
 CREATE INDEX `tasks_user_id_path_idx` ON `tasks` (`user_id`,`path`);--> statement-breakpoint
 CREATE INDEX `tasks_user_id_status_idx` ON `tasks` (`user_id`,`status_id`);--> statement-breakpoint
 CREATE INDEX `tasks_user_id_due_date_idx` ON `tasks` (`user_id`,`due_date`);--> statement-breakpoint
+CREATE INDEX `tasks_user_id_completed_at_idx` ON `tasks` (`user_id`,`completed_at`);--> statement-breakpoint
 CREATE INDEX `tasks_parent_id_idx` ON `tasks` (`parent_id`);--> statement-breakpoint
 CREATE TABLE `tasks_archive` (
 	`id` text PRIMARY KEY NOT NULL,

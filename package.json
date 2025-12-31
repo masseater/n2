@@ -1,20 +1,25 @@
 {
-  "name": "taskari-temp",
+  "name": "n2",
   "private": true,
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "check-types": "turbo run check-types"
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "check-types": "turbo run check-types",
+    "test": "turbo run test",
+    "db:generate": "pnpm --filter @n2/web db:generate",
+    "db:migrate": "pnpm --filter @n2/web db:migrate",
+    "db:studio": "pnpm --filter @n2/web db:studio"
   },
   "devDependencies": {
-    "prettier": "^3.7.4",
-    "turbo": "^2.7.2",
-    "typescript": "5.9.2"
+    "@biomejs/biome": "^2.3.10",
+    "@typescript/native-preview": "catalog:",
+    "turbo": "^2.7.2"
   },
-  "packageManager": "pnpm@9.0.0",
+  "packageManager": "pnpm@9.15.4",
   "engines": {
-    "node": ">=18"
+    "node": ">=24"
   }
 }

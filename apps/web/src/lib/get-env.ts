@@ -3,7 +3,8 @@
  * Cloudflare Workers とローカル開発の両方に対応
  */
 
-import { createSqliteDatabase, type SqliteDatabaseType } from "@/db";
+import { createLocalDatabase } from "@/db";
+import type { ServiceDatabase } from "@/db/types";
 
 /**
  * Cloudflare Workers 環境変数の型定義
@@ -22,18 +23,18 @@ export function isLocalDevelopment(): boolean {
 /**
  * ローカル開発用のDBパスを取得
  */
-export function getLocalDbPath(): string {
+function getLocalDbPath(): string {
   return process.env.LOCAL_DB_PATH ?? "./data/n2.db";
 }
 
-let localDbInstance: SqliteDatabaseType | null = null;
+let localDbInstance: ServiceDatabase | null = null;
 
 /**
  * ローカル開発用のDB接続を取得（シングルトン）
  */
-export function getLocalDatabase(): SqliteDatabaseType {
+export function getLocalDatabase(): ServiceDatabase {
   if (!localDbInstance) {
-    localDbInstance = createSqliteDatabase(getLocalDbPath());
+    localDbInstance = createLocalDatabase(getLocalDbPath());
   }
   return localDbInstance;
 }

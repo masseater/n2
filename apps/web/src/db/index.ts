@@ -1,45 +1,21 @@
 import SqliteDatabase from "better-sqlite3";
-import { type BetterSQLite3Database, drizzle as drizzleSqlite } from "drizzle-orm/better-sqlite3";
-import { type DrizzleD1Database, drizzle as drizzleD1 } from "drizzle-orm/d1";
+import { drizzle as drizzleSqlite } from "drizzle-orm/better-sqlite3";
+import { drizzle as drizzleD1 } from "drizzle-orm/d1";
 import * as schema from "./schema";
+import type { ServiceDatabase } from "./types";
 
 /**
- * Cloudflare D1 用の型
+ * Cloudflare D1 からデータベース接続を作成
  */
-export type D1DatabaseType = DrizzleD1Database<typeof schema>;
-
-/**
- * ローカル開発用の型
- */
-export type SqliteDatabaseType = BetterSQLite3Database<typeof schema>;
-
-/**
- * 共通のデータベース型（Union型）
- */
-export type AppDatabase = D1DatabaseType | SqliteDatabaseType;
-
-/**
- * Cloudflare D1 用のデータベース接続を作成
- * 本番環境およびCloudflare Workers環境で使用
- */
-export function createD1Database(d1: D1Database): D1DatabaseType {
+export function createDatabase(d1: D1Database): ServiceDatabase {
   return drizzleD1(d1, { schema });
 }
 
 /**
  * ローカル開発用のSQLite接続を作成
- * better-sqlite3を使用したファイルベースのSQLite
  */
-export function createSqliteDatabase(dbPath: string): SqliteDatabaseType {
+export function createLocalDatabase(dbPath: string): ServiceDatabase {
   const sqlite = new SqliteDatabase(dbPath);
   sqlite.pragma("journal_mode = WAL");
   return drizzleSqlite(sqlite, { schema });
 }
-
-// 後方互換性のためのエイリアス
-export const createDatabase = createD1Database;
-export const createLocalDatabase = createSqliteDatabase;
-export type Database = D1DatabaseType;
-export type LocalDatabase = SqliteDatabaseType;
-
-export { schema };

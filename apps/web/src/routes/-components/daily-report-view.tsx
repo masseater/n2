@@ -60,8 +60,6 @@ function TaskEntry({
   onTaskUpdate?: (input: UpdateTaskInput) => void;
   onNextStatusChange?: (nextStatusId: string | null) => void;
 }) {
-  const isDone = task.status.type === "done";
-
   // ローカルステートでバッファリングし、blur時に保存
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description ?? "");
@@ -139,7 +137,7 @@ function TaskEntry({
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           onBlur={handleTitleBlur}
-          className={`font-medium border-0 px-0 h-auto focus-visible:ring-0 ${isDone ? "line-through text-muted-foreground" : ""}`}
+          className="font-medium border-0 px-0 h-auto focus-visible:ring-0"
           placeholder="タスクタイトル"
         />
         <Textarea

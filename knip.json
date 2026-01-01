@@ -1,0 +1,17 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "workspaces": {
+    "apps/web": {
+      "entry": [
+        "src/router.tsx",
+        "src/routes/**/*.{ts,tsx}",
+        "drizzle.config.local.ts",
+        "scripts/*.ts"
+      ],
+      "project": ["src/**/*.{ts,tsx}"],
+      "ignore": ["src/routeTree.gen.ts", "src/components/ui/**"]
+    },
+    "packages/shared": {}
+  },
+  "ignoreDependencies": ["@n2/tsconfig", "@typescript/native-preview", "tailwindcss", "tw-animate-css"]
+}

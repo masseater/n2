@@ -3,27 +3,16 @@
  * 共通型は @n2/shared から import
  */
 export type {
-  ArchivedTask,
   CreateStatusInput,
   CreateTagInput,
   CreateTaskInput,
   Status,
   StatusType,
   Tag,
-  Task,
   TaskFilter,
   TaskWithRelations,
   UpdateTaskInput,
 } from "@n2/shared";
-
-/**
- * タスク移動操作の入力型
- */
-export type MoveTaskInput = {
-  taskId: string;
-  newParentId: string | null;
-  newPosition: number;
-};
 
 /**
  * タスク階層ツリーのノード
@@ -37,13 +26,4 @@ export type TaskTreeNode = {
   position: number;
   children: TaskTreeNode[];
   depth: number;
-};
-
-/**
- * ドラッグ&ドロップイベントのデータ
- */
-export type TaskDragData = {
-  taskId: string;
-  parentId: string | null;
-  position: number;
 };

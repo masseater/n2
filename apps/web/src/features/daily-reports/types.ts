@@ -5,7 +5,6 @@
 export type {
   CreateDailyReportInput,
   DailyReport,
-  DailyReportTaskEntry,
   DailyReportTaskWithNotes,
   DailyReportWithTasks,
 } from "@n2/shared";

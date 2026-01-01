@@ -1,6 +1,6 @@
-import { createD1Database } from "../db";
+import { createDatabase } from "../db";
 import type { ServiceDatabase } from "../db/types";
-import { type Auth, createAuth, createLocalAuth } from "../features/auth/auth";
+import { type Auth, createAuth } from "../features/auth/auth";
 import { getCloudflareEnv, getLocalDatabase, isLocalDevelopment } from "./get-env";
 
 /**
@@ -30,30 +30,22 @@ export type ApiContext = {
 };
 
 /**
- * 認証済み API ハンドラーのラッパー
- * ローカル開発とCloudflare Workers の両方に対応
- *
- * @param request - HTTP リクエスト
- * @param handler - 認証済みコンテキストを受け取るハンドラー関数
- * @returns Response
- */
-/**
  * ローカル開発用のデモユーザーID
  */
 const LOCAL_DEV_USER_ID = "local-dev-user";
 
+/**
+ * 認証済み API ハンドラーのラッパー
+ * ローカル開発とCloudflare Workers の両方に対応
+ */
 export async function withAuth(
   request: Request,
   handler: (ctx: ApiContext) => Promise<Response>,
 ): Promise<Response> {
   // ローカル開発環境
   if (isLocalDevelopment()) {
-    const rawDb = getLocalDatabase();
-    // SqliteDatabaseType は runtime で ServiceDatabase と互換
-    const db = rawDb as ServiceDatabase;
-    const auth = createLocalAuth(rawDb);
-
-    // ローカル開発ではデモユーザーを使用（認証バイパス）
+    const db = getLocalDatabase();
+    const auth = createAuth(db);
     return handler({ db, auth, userId: LOCAL_DEV_USER_ID });
   }
 
@@ -63,11 +55,9 @@ export async function withAuth(
     return errorResponse("Database not configured", 500);
   }
 
-  const rawDb = createD1Database(env.DB);
-  const db = rawDb as ServiceDatabase;
-  const auth = createAuth(rawDb);
+  const db = createDatabase(env.DB);
+  const auth = createAuth(db);
 
-  // セッション検証
   const session = await auth.api.getSession({ headers: request.headers });
   if (!session?.user) {
     return errorResponse("Unauthorized", 401);

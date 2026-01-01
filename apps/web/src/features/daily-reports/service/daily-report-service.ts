@@ -305,30 +305,16 @@ export class DailyReportService {
     // 表示対象のタスクを抽出
     // 表示条件:
     // 1. In Progress / TODO のタスク → 表示
-    // 2. 昨日 Done になったタスク → 表示（completedAt が昨日）
-    // 3. 今日 Done になったタスク → 表示（completedAt が今日）
-    // 4. 2日以上前に Done になったタスク → 表示しない
+    // 2. Done のタスク → 表示しない
+    // 3. 手動で日報に追加されたタスク → ステータスに関わらず表示（後で追加）
     const displayTaskIds = new Set<string>();
-    const reportDate = parseDate(report.date);
-    const yesterdayDate = subDays(reportDate, 1);
 
     for (const task of allTasks) {
       const status = statusMap.get(task.statusId);
       if (!status) continue;
 
+      // Done タスクは表示しない
       if (status.type === "done") {
-        // Done タスクは completedAt で判定
-        if (task.completedAt) {
-          const completedDate = new Date(task.completedAt);
-          const completedDateStr = formatDate(completedDate);
-          const reportDateStr = report.date;
-          const yesterdayDateStr = formatDate(yesterdayDate);
-
-          // 今日または昨日に完了したタスクは表示
-          if (completedDateStr === reportDateStr || completedDateStr === yesterdayDateStr) {
-            displayTaskIds.add(task.id);
-          }
-        }
         continue;
       }
 

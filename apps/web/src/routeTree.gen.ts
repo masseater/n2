@@ -9,7 +9,11 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ListRouteImport } from './routes/list'
+import { Route as BoardRouteImport } from './routes/board'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DailyIndexRouteImport } from './routes/daily/index'
+import { Route as DailyDateRouteImport } from './routes/daily/$date'
 import { Route as ApiTasksIndexRouteImport } from './routes/api/tasks/index'
 import { Route as ApiTagsIndexRouteImport } from './routes/api/tags/index'
 import { Route as ApiStatusesIndexRouteImport } from './routes/api/statuses/index'
@@ -22,9 +26,29 @@ import { Route as ApiDailyReportsDateIndexRouteImport } from './routes/api/daily
 import { Route as ApiTasksTaskIdDetailRouteImport } from './routes/api/tasks/$taskId/detail'
 import { Route as ApiDailyReportsDateTasksRouteImport } from './routes/api/daily-reports/$date/tasks'
 
+const ListRoute = ListRouteImport.update({
+  id: '/list',
+  path: '/list',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BoardRoute = BoardRouteImport.update({
+  id: '/board',
+  path: '/board',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DailyIndexRoute = DailyIndexRouteImport.update({
+  id: '/daily/',
+  path: '/daily/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DailyDateRoute = DailyDateRouteImport.update({
+  id: '/daily/$date',
+  path: '/daily/$date',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiTasksIndexRoute = ApiTasksIndexRouteImport.update({
@@ -87,6 +111,10 @@ const ApiDailyReportsDateTasksRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/board': typeof BoardRoute
+  '/list': typeof ListRoute
+  '/daily/$date': typeof DailyDateRoute
+  '/daily': typeof DailyIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/statuses/$statusId': typeof ApiStatusesStatusIdRoute
   '/api/tags/$tagId': typeof ApiTagsTagIdRoute
@@ -101,6 +129,10 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/board': typeof BoardRoute
+  '/list': typeof ListRoute
+  '/daily/$date': typeof DailyDateRoute
+  '/daily': typeof DailyIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/statuses/$statusId': typeof ApiStatusesStatusIdRoute
   '/api/tags/$tagId': typeof ApiTagsTagIdRoute
@@ -116,6 +148,10 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/board': typeof BoardRoute
+  '/list': typeof ListRoute
+  '/daily/$date': typeof DailyDateRoute
+  '/daily/': typeof DailyIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/statuses/$statusId': typeof ApiStatusesStatusIdRoute
   '/api/tags/$tagId': typeof ApiTagsTagIdRoute
@@ -132,6 +168,10 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/board'
+    | '/list'
+    | '/daily/$date'
+    | '/daily'
     | '/api/auth/$'
     | '/api/statuses/$statusId'
     | '/api/tags/$tagId'
@@ -146,6 +186,10 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/board'
+    | '/list'
+    | '/daily/$date'
+    | '/daily'
     | '/api/auth/$'
     | '/api/statuses/$statusId'
     | '/api/tags/$tagId'
@@ -160,6 +204,10 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/board'
+    | '/list'
+    | '/daily/$date'
+    | '/daily/'
     | '/api/auth/$'
     | '/api/statuses/$statusId'
     | '/api/tags/$tagId'
@@ -175,6 +223,10 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BoardRoute: typeof BoardRoute
+  ListRoute: typeof ListRoute
+  DailyDateRoute: typeof DailyDateRoute
+  DailyIndexRoute: typeof DailyIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiStatusesStatusIdRoute: typeof ApiStatusesStatusIdRoute
   ApiTagsTagIdRoute: typeof ApiTagsTagIdRoute
@@ -189,11 +241,39 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/list': {
+      id: '/list'
+      path: '/list'
+      fullPath: '/list'
+      preLoaderRoute: typeof ListRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/board': {
+      id: '/board'
+      path: '/board'
+      fullPath: '/board'
+      preLoaderRoute: typeof BoardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/daily/': {
+      id: '/daily/'
+      path: '/daily'
+      fullPath: '/daily'
+      preLoaderRoute: typeof DailyIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/daily/$date': {
+      id: '/daily/$date'
+      path: '/daily/$date'
+      fullPath: '/daily/$date'
+      preLoaderRoute: typeof DailyDateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/tasks/': {
@@ -290,6 +370,10 @@ const ApiTasksTaskIdRouteWithChildren = ApiTasksTaskIdRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BoardRoute: BoardRoute,
+  ListRoute: ListRoute,
+  DailyDateRoute: DailyDateRoute,
+  DailyIndexRoute: DailyIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiStatusesStatusIdRoute: ApiStatusesStatusIdRoute,
   ApiTagsTagIdRoute: ApiTagsTagIdRoute,

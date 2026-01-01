@@ -4,6 +4,7 @@
  * ローカルDBにデモユーザーとデフォルトデータを作成
  */
 import Database from "better-sqlite3";
+import { format, subDays } from "date-fns";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import {
   dailyReports,
@@ -16,25 +17,9 @@ import {
 } from "../src/db/schema";
 
 const LOCAL_DEV_USER_ID = "local-dev-user";
+const DATE_FORMAT = "yyyy-MM-dd";
 
 const db = drizzle(new Database("./data/n2.db"));
-
-/**
- * 日付を YYYY-MM-DD 形式に変換
- */
-function formatDate(date: Date): string {
-  return date.toISOString().slice(0, 10);
-}
-
-/**
- * n日前の日付を取得
- */
-function daysAgo(n: number): Date {
-  const d = new Date();
-  d.setDate(d.getDate() - n);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
 
 async function seed() {
   console.log("🌱 Seeding database...");
@@ -94,6 +79,7 @@ async function seed() {
   }
 
   // サンプルタスク作成
+  // 日報表示条件: TODO / In Progress → 自動表示、Done → 表示しない（手動追加で表示可）
   console.log("  Creating sample tasks...");
   const now = new Date();
   const sampleTasks = [
@@ -123,29 +109,19 @@ async function seed() {
     },
     {
       id: "task-4",
-      title: "バグ修正: ログイン画面",
-      description: "パスワードリセット時のエラーハンドリング修正。",
-      statusId: "status-done",
-      position: 3,
-      priority: 9,
-      completedAt: daysAgo(0),
-    },
-    {
-      id: "task-5",
-      title: "テストカバレッジ向上",
-      description: "ユニットテストを追加して80%以上を目指す。",
-      statusId: "status-done",
-      position: 4,
-      priority: 5,
-      completedAt: daysAgo(1),
-    },
-    {
-      id: "task-6",
       title: "デプロイパイプライン構築",
       description: "GitHub ActionsでCI/CDを構築。",
       statusId: "status-todo",
-      position: 5,
+      position: 3,
       priority: 7,
+    },
+    {
+      id: "task-5",
+      title: "パフォーマンス改善",
+      description: "ボトルネック調査と最適化。",
+      statusId: "status-in-progress",
+      position: 4,
+      priority: 5,
     },
   ];
 
@@ -169,10 +145,8 @@ async function seed() {
     { taskId: "task-1", tagId: "tag-urgent" },
     { taskId: "task-2", tagId: "tag-work" },
     { taskId: "task-3", tagId: "tag-work" },
-    { taskId: "task-4", tagId: "tag-work" },
-    { taskId: "task-4", tagId: "tag-urgent" },
+    { taskId: "task-4", tagId: "tag-personal" },
     { taskId: "task-5", tagId: "tag-work" },
-    { taskId: "task-6", tagId: "tag-personal" },
   ];
 
   for (const relation of taskTagRelations) {
@@ -180,9 +154,13 @@ async function seed() {
   }
 
   // 日報作成（今日と昨日）
+  // 日報表示ロジック:
+  // - yesterdayNote がない場合、昨日の todayNote が自動引き継ぎ
+  // - statusId: その日時点のスナップショット（変更前ステータス）
+  // - nextStatusId: 今日変更したステータス（履歴用）
   console.log("  Creating daily reports...");
-  const today = formatDate(now);
-  const yesterday = formatDate(daysAgo(1));
+  const today = format(now, DATE_FORMAT);
+  const yesterday = format(subDays(now, 1), DATE_FORMAT);
 
   console.log(`    Today: ${today}, Yesterday: ${yesterday}`);
 
@@ -190,12 +168,12 @@ async function seed() {
     {
       id: `report-${today}`,
       date: today,
-      notes: "今日の作業メモ\n\n- 朝会で進捗共有\n- レビュー対応",
+      notes: "今日の振り返り\n\n- 朝会で進捗共有\n- レビュー対応完了",
     },
     {
       id: `report-${yesterday}`,
       date: yesterday,
-      notes: "昨日の振り返り\n\n- テスト完了\n- ドキュメント下書き",
+      notes: "昨日の振り返り\n\n- 設計レビュー実施\n- 実装方針決定",
     },
   ];
 
@@ -212,49 +190,49 @@ async function seed() {
   }
 
   // 日報タスクエントリ作成
+  // 全タスクは TODO/In Progress なので日報に自動表示される
+  // ここでは追加情報（ノート）を持つエントリのみ作成
   console.log("  Creating daily report task entries...");
   const todayReportId = `report-${today}`;
   const yesterdayReportId = `report-${yesterday}`;
 
   const reportTaskEntries = [
+    // 今日の日報エントリ
     {
       dailyReportId: todayReportId,
       taskId: "task-1",
       statusId: "status-in-progress",
-      yesterdayNote: "認証フローの設計完了",
-      todayNote: "実装を進める",
+      nextStatusId: null,
+      yesterdayNote: null, // 昨日の todayNote が自動引き継ぎされる
+      todayNote: "実装を進める。エラーハンドリング追加予定",
       position: 0,
     },
     {
       dailyReportId: todayReportId,
       taskId: "task-2",
       statusId: "status-in-progress",
+      nextStatusId: null,
       yesterdayNote: null,
       todayNote: "Buttonコンポーネントの共通化",
       position: 1,
     },
-    {
-      dailyReportId: todayReportId,
-      taskId: "task-4",
-      statusId: "status-done",
-      yesterdayNote: null,
-      todayNote: "修正完了、マージ済み",
-      position: 2,
-    },
+    // 昨日の日報エントリ
     {
       dailyReportId: yesterdayReportId,
       taskId: "task-1",
       statusId: "status-in-progress",
+      nextStatusId: null,
       yesterdayNote: "要件確認",
-      todayNote: "認証フローの設計",
+      todayNote: "認証フローの設計完了", // 今日の yesterdayNote として自動引き継ぎ
       position: 0,
     },
     {
       dailyReportId: yesterdayReportId,
       taskId: "task-5",
-      statusId: "status-done",
-      yesterdayNote: "テスト追加中",
-      todayNote: "テスト完了、カバレッジ82%達成",
+      statusId: "status-in-progress",
+      nextStatusId: null,
+      yesterdayNote: "ボトルネック調査",
+      todayNote: "プロファイリング実施",
       position: 1,
     },
   ];

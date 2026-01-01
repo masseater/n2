@@ -305,7 +305,7 @@ export class DailyReportService {
     // 表示対象のタスクを抽出
     // 表示条件:
     // 1. In Progress / TODO のタスク → 表示
-    // 2. Done のタスク → 表示しない
+    // 2. Done のタスク → その日に Done になった場合のみ表示
     // 3. 手動で日報に追加されたタスク → ステータスに関わらず表示（後で追加）
     const displayTaskIds = new Set<string>();
 
@@ -313,8 +313,14 @@ export class DailyReportService {
       const status = statusMap.get(task.statusId);
       if (!status) continue;
 
-      // Done タスクは表示しない
       if (status.type === "done") {
+        // その日に Done になった場合のみ表示
+        if (task.completedAt) {
+          const completedDate = formatDate(task.completedAt);
+          if (completedDate === report.date) {
+            displayTaskIds.add(task.id);
+          }
+        }
         continue;
       }
 
@@ -399,12 +405,13 @@ export class DailyReportService {
       };
     });
 
-    // In Progress を先に、Done を後にソート
+    // 優先度順（昇順: 小さい値が上）でソート
+    // null は 10 として末尾に表示
     resultTasks.sort((a, b) => {
-      const aIsDone = a.status.type === "done";
-      const bIsDone = b.status.type === "done";
-      if (aIsDone !== bIsDone) return aIsDone ? 1 : -1;
-      return 0;
+      const priorityA = a.priority ?? 10;
+      const priorityB = b.priority ?? 10;
+      if (priorityA !== priorityB) return priorityA - priorityB;
+      return a.id.localeCompare(b.id);
     });
 
     return {

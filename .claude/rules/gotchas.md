@@ -43,3 +43,20 @@
 - カスタムスタイルを適用した `<button>` には `cursor-pointer` を明示的に指定する
 - `bg-white/5` 等のカスタム背景でブラウザデフォルトのカーソルスタイルがリセットされる場合がある
 - Biome/ESLint では CSS クラスの欠落は検出されない
+
+## TanStack Start + Vitest テスト環境
+
+TanStack Start + Cloudflare Workers + Vitest の組み合わせには複合的な制約がある:
+
+1. **Server Functions の制約**: `'use server'` pragma と Vite プラグインが必要。Vitest で直接テストすると `Invariant failed` エラー
+2. **Cloudflare プラグインの制約**: workerd 環境を強制し、CJS モジュール（`tiny-warning` 等）で `module is not defined` エラー
+3. **公式サポートなし**: TanStack Start にテストの公式ドキュメントがない（2025年1月時点）
+
+### 解決策
+
+`vitest.config.ts` を別ファイルで作成し:
+- Cloudflare プラグインを除外
+- `createServerFn` をモックする setup ファイルを使用
+- ビジネスロジックのみをテスト対象にする
+
+参考: [TanStack/router Discussion #2701](https://github.com/TanStack/router/discussions/2701)

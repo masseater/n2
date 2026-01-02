@@ -2,6 +2,10 @@
 
 日報粒度とタスク粒度を切り替え可能な個人向けタスク管理ツール
 
+## URL
+
+- Production: https://n2.masseater.workers.dev
+
 ## Tech Stack
 
 - Monorepo: Turborepo + pnpm workspace

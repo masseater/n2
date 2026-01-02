@@ -56,7 +56,7 @@
   },
   "overrides": [
     {
-      "includes": ["**/*.gen.ts"],
+      "includes": ["**/*.gen.ts", "**/worker-configuration.d.ts"],
       "linter": {
         "enabled": false
       },

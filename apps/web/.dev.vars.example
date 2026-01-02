@@ -1,0 +1,11 @@
+# Cloudflare Workers ローカル開発用の環境変数
+# このファイルをコピーして .dev.vars として保存し、実際の値を設定してください
+# .dev.vars は .gitignore に含まれています
+
+# Google OAuth
+GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+
+# Better Auth Secret
+# openssl rand -base64 32 で生成可能
+BETTER_AUTH_SECRET=your-random-secret-at-least-32-characters

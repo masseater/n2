@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as ListRouteImport } from './routes/list'
 import { Route as BoardRouteImport } from './routes/board'
 import { Route as IndexRouteImport } from './routes/index'
@@ -26,6 +27,11 @@ import { Route as ApiDailyReportsDateIndexRouteImport } from './routes/api/daily
 import { Route as ApiTasksTaskIdDetailRouteImport } from './routes/api/tasks/$taskId/detail'
 import { Route as ApiDailyReportsDateTasksRouteImport } from './routes/api/daily-reports/$date/tasks'
 
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ListRoute = ListRouteImport.update({
   id: '/list',
   path: '/list',
@@ -113,6 +119,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/board': typeof BoardRoute
   '/list': typeof ListRoute
+  '/login': typeof LoginRoute
   '/daily/$date': typeof DailyDateRoute
   '/daily': typeof DailyIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -131,6 +138,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/board': typeof BoardRoute
   '/list': typeof ListRoute
+  '/login': typeof LoginRoute
   '/daily/$date': typeof DailyDateRoute
   '/daily': typeof DailyIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -150,6 +158,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/board': typeof BoardRoute
   '/list': typeof ListRoute
+  '/login': typeof LoginRoute
   '/daily/$date': typeof DailyDateRoute
   '/daily/': typeof DailyIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -170,6 +179,7 @@ export interface FileRouteTypes {
     | '/'
     | '/board'
     | '/list'
+    | '/login'
     | '/daily/$date'
     | '/daily'
     | '/api/auth/$'
@@ -188,6 +198,7 @@ export interface FileRouteTypes {
     | '/'
     | '/board'
     | '/list'
+    | '/login'
     | '/daily/$date'
     | '/daily'
     | '/api/auth/$'
@@ -206,6 +217,7 @@ export interface FileRouteTypes {
     | '/'
     | '/board'
     | '/list'
+    | '/login'
     | '/daily/$date'
     | '/daily/'
     | '/api/auth/$'
@@ -225,6 +237,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BoardRoute: typeof BoardRoute
   ListRoute: typeof ListRoute
+  LoginRoute: typeof LoginRoute
   DailyDateRoute: typeof DailyDateRoute
   DailyIndexRoute: typeof DailyIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
@@ -241,6 +254,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/list': {
       id: '/list'
       path: '/list'
@@ -372,6 +392,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BoardRoute: BoardRoute,
   ListRoute: ListRoute,
+  LoginRoute: LoginRoute,
   DailyDateRoute: DailyDateRoute,
   DailyIndexRoute: DailyIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,

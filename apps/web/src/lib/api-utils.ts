@@ -1,7 +1,7 @@
 import { createDatabase } from "../db";
 import type { ServiceDatabase } from "../db/types";
 import { type Auth, createAuth } from "../features/auth/auth";
-import { getCloudflareEnv, getLocalDatabase, isLocalDevelopment } from "./get-env";
+import { getCloudflareEnv } from "./get-env";
 
 /**
  * API レスポンスを JSON で返すヘルパー
@@ -31,39 +31,48 @@ export type ApiContext = {
 
 /**
  * ローカル開発用のデモユーザーID
+ * D1 エミュレータ使用時、認証をスキップして開発を行う
  */
 const LOCAL_DEV_USER_ID = "local-dev-user";
 
 /**
  * 認証済み API ハンドラーのラッパー
- * ローカル開発とCloudflare Workers の両方に対応
+ * Cloudflare Workers 環境（ローカル D1 エミュレータを含む）に対応
  */
 export async function withAuth(
   request: Request,
   handler: (ctx: ApiContext) => Promise<Response>,
 ): Promise<Response> {
-  // ローカル開発環境
-  if (isLocalDevelopment()) {
-    const db = getLocalDatabase();
-    const auth = createAuth(db);
-    return handler({ db, auth, userId: LOCAL_DEV_USER_ID });
+  try {
+    const env = getCloudflareEnv();
+    if (!env?.DB) {
+      console.error("[withAuth] DB binding not found in env:", Object.keys(env ?? {}));
+      return errorResponse("Database not configured", 500);
+    }
+
+    const db = createDatabase(env.DB);
+    const auth = createAuth(db, {
+      googleClientId: env.GOOGLE_CLIENT_ID,
+      googleClientSecret: env.GOOGLE_CLIENT_SECRET,
+      secret: env.BETTER_AUTH_SECRET,
+    });
+
+    // ローカル開発時（secrets が設定されていない場合）は認証スキップ
+    if (!env.BETTER_AUTH_SECRET) {
+      return handler({ db, auth, userId: LOCAL_DEV_USER_ID });
+    }
+
+    const session = await auth.api.getSession({ headers: request.headers });
+    if (!session?.user) {
+      return errorResponse("Unauthorized", 401);
+    }
+
+    return handler({ db, auth, userId: session.user.id });
+  } catch (error) {
+    console.error("[withAuth] Error:", error);
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return errorResponse(`Internal error: ${message}`, 500);
   }
-
-  // Cloudflare Workers 環境
-  const env = getCloudflareEnv(request);
-  if (!env) {
-    return errorResponse("Database not configured", 500);
-  }
-
-  const db = createDatabase(env.DB);
-  const auth = createAuth(db);
-
-  const session = await auth.api.getSession({ headers: request.headers });
-  if (!session?.user) {
-    return errorResponse("Unauthorized", 401);
-  }
-
-  return handler({ db, auth, userId: session.user.id });
 }
 
 /**

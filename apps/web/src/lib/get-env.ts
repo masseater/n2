@@ -1,77 +1,30 @@
 /**
  * 環境変数を取得するためのユーティリティ
  * Cloudflare Workers とローカル開発の両方に対応
+ *
+ * NOTE: Vite + Cloudflare プラグインを使用しているため、
+ * ローカル開発時も Cloudflare Workers 環境でエミュレートされる。
+ * そのため better-sqlite3 は使用せず、常に D1 を使用する。
  */
-
-import { createLocalDatabase } from "@/db";
-import type { ServiceDatabase } from "@/db/types";
 
 /**
  * Cloudflare Workers 環境変数の型定義
+ * wrangler types で生成された Env 型を再エクスポート
  */
-export type CloudflareEnv = {
-  DB: D1Database;
-};
+export type CloudflareEnv = Env;
 
 /**
  * ローカル開発かどうかを判定
+ * Vite + Cloudflare プラグイン環境では、ローカルでも Workers として動作する
  */
 export function isLocalDevelopment(): boolean {
-  return process.env.NODE_ENV === "development" && !process.env.CLOUDFLARE_WORKERS;
+  // Vite + Cloudflare プラグインでは、ローカルでも D1 エミュレータを使用するため
+  // 実質的にこの判定は使用しない（常に false を返す）
+  return false;
 }
 
 /**
- * ローカル開発用のDBパスを取得
+ * Cloudflare Workers 環境変数を取得
+ * cloudflare:workers モジュールから取得
  */
-function getLocalDbPath(): string {
-  return process.env.LOCAL_DB_PATH ?? "./data/n2.db";
-}
-
-let localDbInstance: ServiceDatabase | null = null;
-
-/**
- * ローカル開発用のDB接続を取得（シングルトン）
- */
-export function getLocalDatabase(): ServiceDatabase {
-  if (!localDbInstance) {
-    localDbInstance = createLocalDatabase(getLocalDbPath());
-  }
-  return localDbInstance;
-}
-
-/**
- * Request から Cloudflare 環境変数を取得
- *
- * @param request - HTTP リクエスト
- * @returns 環境変数オブジェクト、または undefined
- */
-export function getCloudflareEnv(request: Request): CloudflareEnv | undefined {
-  // Cloudflare Workers では request.cf.env に環境変数が格納される
-  // TanStack Start では getRequestContext() を使用することも可能
-  const cfProperty = Object.getOwnPropertyDescriptor(request, "cf");
-  if (!cfProperty?.value) {
-    return undefined;
-  }
-
-  const cf = cfProperty.value;
-  if (typeof cf !== "object" || cf === null) {
-    return undefined;
-  }
-
-  const envProperty = Object.getOwnPropertyDescriptor(cf, "env");
-  if (!envProperty?.value) {
-    return undefined;
-  }
-
-  const env = envProperty.value;
-  if (typeof env !== "object" || env === null) {
-    return undefined;
-  }
-
-  // D1Database の存在確認
-  if (!("DB" in env)) {
-    return undefined;
-  }
-
-  return env as CloudflareEnv;
-}
+export { getCloudflareEnv } from "./cloudflare-env";

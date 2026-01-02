@@ -35,7 +35,8 @@ function LandingPage() {
     await signInWithGoogle();
   };
 
-  if (!isMounted || isPending) {
+  // SSR 中はローディング表示
+  if (!isMounted) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950">
         <div className="text-gray-500 text-sm tracking-widest animate-pulse">...</div>
@@ -82,7 +83,7 @@ function LandingPage() {
         <button
           type="button"
           onClick={handleGoogleLogin}
-          className="group inline-flex items-center gap-3 bg-white/5 text-gray-300 text-sm py-3 px-6 rounded-full border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-300"
+          className="group inline-flex items-center gap-3 bg-white/5 text-gray-300 text-sm py-3 px-6 rounded-full border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-300 cursor-pointer"
         >
           <svg className="w-4 h-4 opacity-70" viewBox="0 0 24 24" role="img" aria-label="Google">
             <path

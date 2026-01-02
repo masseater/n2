@@ -37,3 +37,9 @@
 - `better-sqlite3` などの Node.js ネイティブモジュールは使用不可（`__filename is not defined` エラー）
 - ローカル DB 接続には D1 エミュレータを使用する（Wrangler が自動提供）
 - ローカル開発用の secrets は `apps/web/.dev.vars` に設定する
+
+## Tailwind ボタンスタイル
+
+- カスタムスタイルを適用した `<button>` には `cursor-pointer` を明示的に指定する
+- `bg-white/5` 等のカスタム背景でブラウザデフォルトのカーソルスタイルがリセットされる場合がある
+- Biome/ESLint では CSS クラスの欠落は検出されない
